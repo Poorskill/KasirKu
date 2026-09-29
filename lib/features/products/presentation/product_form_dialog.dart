@@ -433,6 +433,13 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
   }
 
   Widget _buildCategoryDropdown(AsyncValue<List<ProductCategory>> asyncCats) {
+    final cats = asyncCats.asData?.value.where((c) => c.id != 'all').toList() ??
+        const [
+          ProductCategory(id: 'cat-makanan', name: 'Makanan'),
+          ProductCategory(id: 'cat-minuman', name: 'Minuman'),
+          ProductCategory(id: 'cat-snack', name: 'Snack / Camilan'),
+        ];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -455,24 +462,18 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
-              value: _selectedCategory,
+              value: cats.any((c) => c.id == _selectedCategory)
+                  ? _selectedCategory
+                  : cats.first.id,
               isExpanded: true,
               icon: const Icon(Icons.keyboard_arrow_down_rounded,
                   color: AppColors.textSecondary),
-              items: const [
-                DropdownMenuItem(
-                  value: 'cat-makanan',
-                  child: Text('Makanan'),
-                ),
-                DropdownMenuItem(
-                  value: 'cat-minuman',
-                  child: Text('Minuman'),
-                ),
-                DropdownMenuItem(
-                  value: 'cat-snack',
-                  child: Text('Snack / Camilan'),
-                ),
-              ],
+              items: cats.map((cat) {
+                return DropdownMenuItem<String>(
+                  value: cat.id,
+                  child: Text(cat.name),
+                );
+              }).toList(),
               onChanged: (val) {
                 if (val != null) {
                   setState(() => _selectedCategory = val);

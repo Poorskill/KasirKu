@@ -10,6 +10,7 @@ import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../models/product.dart';
+import '../../auth/presentation/auth_provider.dart';
 import 'product_form_dialog.dart';
 import 'products_provider.dart';
 
@@ -18,6 +19,8 @@ class ProductListScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(currentUserProvider);
+    final isAdmin = user?.isAdmin ?? true;
     final productsAsync = ref.watch(productsStreamProvider);
     final filteredProducts = ref.watch(filteredProductsProvider);
     final categoriesAsync = ref.watch(categoriesProvider);
@@ -214,8 +217,8 @@ class ProductListScreen extends ConsumerWidget {
                     )
                   else
                     context.isMobile
-                        ? _buildMobileList(context, ref, filteredProducts)
-                        : _buildDesktopTable(context, ref, filteredProducts),
+                        ? _buildMobileList(context, ref, filteredProducts, isAdmin: isAdmin)
+                        : _buildDesktopTable(context, ref, filteredProducts, isAdmin: isAdmin),
                 ],
               ),
             );
@@ -399,8 +402,9 @@ class ProductListScreen extends ConsumerWidget {
   Widget _buildDesktopTable(
     BuildContext context,
     WidgetRef ref,
-    List<Product> products,
-  ) {
+    List<Product> products, {
+    required bool isAdmin,
+  }) {
     return AppCard(
       padding: EdgeInsets.zero,
       child: Column(
@@ -563,13 +567,14 @@ class ProductListScreen extends ConsumerWidget {
                             onPressed: () => ProductFormDialog.show(context,
                                 product: product),
                           ),
-                          IconButton(
-                            icon: const Icon(Icons.delete_outline_rounded,
-                                size: 18, color: AppColors.danger),
-                            tooltip: 'Hapus / Nonaktifkan',
-                            onPressed: () =>
-                                _confirmDelete(context, ref, product),
-                          ),
+                          if (isAdmin)
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline_rounded,
+                                  size: 18, color: AppColors.danger),
+                              tooltip: 'Hapus / Nonaktifkan',
+                              onPressed: () =>
+                                  _confirmDelete(context, ref, product),
+                            ),
                         ],
                       ),
                     ),
@@ -586,8 +591,9 @@ class ProductListScreen extends ConsumerWidget {
   Widget _buildMobileList(
     BuildContext context,
     WidgetRef ref,
-    List<Product> products,
-  ) {
+    List<Product> products, {
+    required bool isAdmin,
+  }) {
     return ListView.separated(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -694,18 +700,19 @@ class ProductListScreen extends ConsumerWidget {
                           ],
                         ),
                       ),
-                      const PopupMenuItem(
-                        value: 'delete',
-                        child: Row(
-                          children: [
-                            Icon(Icons.delete_outline,
-                                size: 18, color: AppColors.danger),
-                            SizedBox(width: 8),
-                            Text('Hapus',
-                                style: TextStyle(color: AppColors.danger)),
-                          ],
+                      if (isAdmin)
+                        const PopupMenuItem(
+                          value: 'delete',
+                          child: Row(
+                            children: [
+                              Icon(Icons.delete_outline,
+                                  size: 18, color: AppColors.danger),
+                              SizedBox(width: 8),
+                              Text('Hapus',
+                                  style: TextStyle(color: AppColors.danger)),
+                            ],
+                          ),
                         ),
-                      ),
                     ],
                   ),
                 ],
