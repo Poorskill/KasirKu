@@ -150,6 +150,27 @@ class _DesktopLayout extends StatelessWidget {
                         onTap: () => context.go('/pos'),
                       ),
                       _SidebarNavItem(
+                        icon: Icons.view_kanban_outlined,
+                        activeIcon: Icons.view_kanban_rounded,
+                        label: 'Antrean Pesanan',
+                        isSelected: currentLocation.startsWith('/orders'),
+                        onTap: () => context.go('/orders'),
+                      ),
+                      _SidebarNavItem(
+                        icon: Icons.outdoor_grill_outlined,
+                        activeIcon: Icons.outdoor_grill_rounded,
+                        label: 'Dapur (KDS)',
+                        isSelected: currentLocation.startsWith('/kitchen'),
+                        onTap: () => context.go('/kitchen'),
+                      ),
+                      _SidebarNavItem(
+                        icon: Icons.room_service_outlined,
+                        activeIcon: Icons.room_service_rounded,
+                        label: 'Pelayan (Waiter)',
+                        isSelected: currentLocation.startsWith('/waiter'),
+                        onTap: () => context.go('/waiter'),
+                      ),
+                      _SidebarNavItem(
                         icon: Icons.table_restaurant_outlined,
                         activeIcon: Icons.table_restaurant_rounded,
                         label: 'Meja & QR Resto',
@@ -368,6 +389,27 @@ class _TabletLayout extends StatelessWidget {
                         tooltip: 'Kasir',
                         isSelected: currentLocation.startsWith('/pos'),
                         onTap: () => context.go('/pos'),
+                      ),
+                      _CompactNavItem(
+                        icon: Icons.view_kanban_outlined,
+                        activeIcon: Icons.view_kanban_rounded,
+                        tooltip: 'Antrean Pesanan',
+                        isSelected: currentLocation.startsWith('/orders'),
+                        onTap: () => context.go('/orders'),
+                      ),
+                      _CompactNavItem(
+                        icon: Icons.outdoor_grill_outlined,
+                        activeIcon: Icons.outdoor_grill_rounded,
+                        tooltip: 'Dapur (KDS)',
+                        isSelected: currentLocation.startsWith('/kitchen'),
+                        onTap: () => context.go('/kitchen'),
+                      ),
+                      _CompactNavItem(
+                        icon: Icons.room_service_outlined,
+                        activeIcon: Icons.room_service_rounded,
+                        tooltip: 'Pelayan (Waiter)',
+                        isSelected: currentLocation.startsWith('/waiter'),
+                        onTap: () => context.go('/waiter'),
                       ),
                       _CompactNavItem(
                         icon: Icons.table_restaurant_outlined,
@@ -597,6 +639,33 @@ class _MobileLayout extends StatelessWidget {
                     color: AppColors.border,
                     borderRadius: BorderRadius.circular(2),
                   ),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.view_kanban_outlined, color: AppColors.primary),
+                  title: const Text('Antrean Pesanan', style: TextStyle(fontWeight: FontWeight.w600)),
+                  subtitle: const Text('Kelola pesanan masuk dari QR meja dan kasir'),
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    context.go('/orders');
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.outdoor_grill_outlined, color: AppColors.primary),
+                  title: const Text('Dapur Masak (KDS)', style: TextStyle(fontWeight: FontWeight.w600)),
+                  subtitle: const Text('Layar antrean memasak koki & peracikan bar'),
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    context.go('/kitchen');
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.room_service_outlined, color: AppColors.primary),
+                  title: const Text('Pelayan (Waiter)', style: TextStyle(fontWeight: FontWeight.w600)),
+                  subtitle: const Text('Layanan meja dan makanan siap antar'),
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    context.go('/waiter');
+                  },
                 ),
                 ListTile(
                   leading: const Icon(Icons.table_restaurant_outlined, color: AppColors.primary),

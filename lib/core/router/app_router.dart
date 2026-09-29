@@ -6,12 +6,15 @@ import '../../features/auth/presentation/login_screen.dart';
 import '../../features/customer_order/presentation/customer_order_screen.dart';
 import '../../features/dashboard/presentation/dashboard_screen.dart';
 import '../../features/inventory/presentation/inventory_screen.dart';
+import '../../features/kitchen/presentation/kitchen_screen.dart';
+import '../../features/orders/presentation/orders_screen.dart';
 import '../../features/pos/presentation/pos_screen.dart';
 import '../../features/products/presentation/product_list_screen.dart';
 import '../../features/reports/presentation/reports_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/tables/presentation/tables_screen.dart';
 import '../../features/transactions/presentation/transaction_history_screen.dart';
+import '../../features/waiter/presentation/waiter_screen.dart';
 import '../widgets/app_shell.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -78,6 +81,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/pos',
             builder: (context, state) => const PosScreen(),
+          ),
+          GoRoute(
+            path: '/orders',
+            builder: (context, state) => const OrdersScreen(),
+          ),
+          GoRoute(
+            path: '/kitchen',
+            builder: (context, state) => const KitchenScreen(),
+          ),
+          GoRoute(
+            path: '/waiter',
+            builder: (context, state) => const WaiterScreen(),
           ),
           GoRoute(
             path: '/tables',
