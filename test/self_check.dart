@@ -1,10 +1,14 @@
 import 'package:kasirku/core/utils/currency_formatter.dart';
 import 'package:kasirku/core/utils/pricing_calculator.dart';
+import 'package:kasirku/models/online_payment.dart';
 import 'package:kasirku/models/product.dart';
+import 'package:kasirku/models/product_modifier.dart';
+import 'package:kasirku/models/restaurant_order.dart';
 import 'package:kasirku/models/restaurant_table.dart';
 import 'package:kasirku/models/stock_movement.dart';
 import 'package:kasirku/models/table_session.dart';
 import 'package:kasirku/models/user_profile.dart';
+import 'package:kasirku/models/waiter_call.dart';
 import 'package:kasirku/features/pos/presentation/cart_provider.dart';
 
 void main() {
@@ -157,6 +161,72 @@ void main() {
   final unpaidSession = session.copyWith(paidAmount: 50000);
   assert(unpaidSession.outstandingAmount == 50000, 'Outstanding should be 50000');
   assert(!unpaidSession.canClose, 'Unpaid session cannot close');
+
+  // 8. Product Modifiers and Customer Cart calculation
+  const extraCheese = SelectedModifier(
+    groupId: 'grp-topping',
+    groupName: 'Topping',
+    optionId: 'opt-cheese',
+    optionName: 'Keju',
+    extraPrice: 4000,
+  );
+  final cartItem = CustomerCartItem(
+    id: 'ci-1',
+    product: p, // price: 15000
+    quantity: 2,
+    selectedModifiers: const [extraCheese],
+    note: 'Pedas',
+  );
+  assert(cartItem.unitPrice == 19000, 'Unit price with modifier must be 19000');
+  assert(cartItem.subtotal == 38000, 'Subtotal for 2 items must be 38000');
+
+  // 9. Restaurant Order State Machine & Online Payment
+  final orderItem = RestaurantOrderItem.fromCustomerCartItem(cartItem);
+  final order = RestaurantOrder(
+    id: 'ord-1',
+    tableId: 'tbl-1',
+    tableNumber: '01',
+    orderNumber: 'ORD-01-001',
+    customerName: 'Budi',
+    items: [orderItem],
+    subtotal: 38000,
+    total: 38000,
+    paymentStatus: 'pending',
+    orderStatus: OrderStatus.pendingPayment,
+    createdAt: now,
+    updatedAt: now,
+  );
+  assert(!order.isPaid, 'Order should be pending payment');
+  assert(order.orderStatus == OrderStatus.pendingPayment, 'Status pending payment');
+
+  final payment = OnlinePayment(
+    id: 'pay-1',
+    orderId: 'ord-1',
+    tableId: 'tbl-1',
+    tableNumber: '01',
+    customerName: 'Budi',
+    amount: 38000,
+    method: OnlinePaymentMethod.qris,
+    paymentReference: 'QRIS-REF-123',
+    createdAt: now,
+  );
+  assert(!payment.isPaid, 'Payment should be pending initially');
+
+  final paidOrder = order.copyWith(
+    paymentStatus: 'paid',
+    orderStatus: OrderStatus.paid,
+  );
+  assert(paidOrder.isPaid, 'Order should now be marked paid');
+
+  // 10. Waiter Call
+  final call = WaiterCall(
+    id: 'call-1',
+    tableId: 'tbl-1',
+    tableNumber: '01',
+    type: 'Minta Bill',
+    createdAt: now,
+  );
+  assert(call.status == WaiterCallStatus.pending, 'Call should start as pending');
 
   // Self check complete without throwing AssertionError
 }

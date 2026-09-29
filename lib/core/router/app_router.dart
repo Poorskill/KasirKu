@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/auth/presentation/auth_provider.dart';
 import '../../features/auth/presentation/login_screen.dart';
+import '../../features/customer_order/presentation/customer_order_screen.dart';
 import '../../features/dashboard/presentation/dashboard_screen.dart';
 import '../../features/inventory/presentation/inventory_screen.dart';
 import '../../features/pos/presentation/pos_screen.dart';
@@ -23,9 +24,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     navigatorKey: _rootNavigatorKey,
     initialLocation: '/',
     redirect: (context, state) {
+      final path = state.uri.path;
+
+      // Public Customer Table Ordering Route (no login required)
+      if (path.startsWith('/order')) {
+        return null;
+      }
+
       final user = authState.asData?.value;
       final isLoggedIn = user != null;
-      final isLoggingIn = state.uri.path == '/login';
+      final isLoggingIn = path == '/login';
 
       if (!isLoggedIn && !isLoggingIn) {
         return '/login';
@@ -36,7 +44,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       // Cashier route guard
       if (isLoggedIn && !user.isAdmin) {
-        final path = state.uri.path;
         if (path == '/' ||
             path.startsWith('/products') ||
             path.startsWith('/inventory') ||
@@ -49,6 +56,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
+      GoRoute(
+        path: '/order/:storeId/:tableToken',
+        builder: (context, state) => CustomerOrderScreen(
+          storeId: state.pathParameters['storeId'] ?? 'store-default',
+          tableToken: state.pathParameters['tableToken'] ?? '',
+        ),
+      ),
       GoRoute(
         path: '/login',
         builder: (context, state) => const LoginScreen(),
