@@ -20,6 +20,7 @@ abstract class TableRepository {
   Stream<List<TableSession>> watchSessions();
   Future<TableSession?> getSessionById(String id);
   Future<TableSession> openTableSession(String tableId, {String createdBy = 'Staff'});
+  Future<void> updateSessionAmounts(String sessionId, {required double totalAmount, required double paidAmount, List<String>? orderIds});
   Future<bool> closeTableSession(String sessionId);
 }
 
@@ -330,6 +331,33 @@ class HybridTableRepository implements TableRepository {
     await updateTable(updatedTable);
 
     return session;
+  }
+
+  @override
+  Future<void> updateSessionAmounts(
+    String sessionId, {
+    required double totalAmount,
+    required double paidAmount,
+    List<String>? orderIds,
+  }) async {
+    final idx = _inMemorySessions.indexWhere((s) => s.id == sessionId);
+    if (idx != -1) {
+      final updated = _inMemorySessions[idx].copyWith(
+        totalAmount: totalAmount,
+        paidAmount: paidAmount,
+        orderIds: orderIds ?? _inMemorySessions[idx].orderIds,
+      );
+      _inMemorySessions[idx] = updated;
+      _sessionsController.add(List.unmodifiable(_inMemorySessions));
+      if (_firebaseReady) {
+        try {
+          await FirebaseFirestore.instance
+              .collection('table_sessions')
+              .doc(sessionId)
+              .update(updated.toJson());
+        } catch (_) {}
+      }
+    }
   }
 
   @override

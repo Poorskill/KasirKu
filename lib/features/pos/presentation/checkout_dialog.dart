@@ -10,7 +10,9 @@ import '../../../models/transaction.dart';
 import '../../auth/presentation/auth_provider.dart';
 import '../../inventory/presentation/stock_provider.dart';
 import '../../products/presentation/products_provider.dart';
+import '../../tables/presentation/tables_provider.dart';
 import '../../transactions/presentation/transactions_provider.dart';
+import '../../../models/restaurant_table.dart';
 import 'cart_provider.dart';
 import 'receipt_dialog.dart';
 
@@ -90,6 +92,9 @@ class _CheckoutDialogState extends ConsumerState<CheckoutDialog> {
       paymentMethod: _selectedMethod,
       paymentAmount: paid,
       change: cart.pricing.calculateChange(paid),
+      orderType: cart.isDineIn ? 'dineIn' : 'takeaway',
+      tableId: cart.selectedTable?.id,
+      tableNumber: cart.selectedTable?.tableNumber,
       createdAt: now,
       status: 'success',
     );
@@ -97,6 +102,15 @@ class _CheckoutDialogState extends ConsumerState<CheckoutDialog> {
     // Save transaction
     final trxRepo = ref.read(transactionRepositoryProvider);
     await trxRepo.createTransaction(transaction);
+
+    // If Dine-in with table, mark table occupied if currently available
+    if (cart.isDineIn && cart.selectedTable != null) {
+      if (cart.selectedTable!.isAvailable) {
+        await ref
+            .read(tableControllerProvider.notifier)
+            .updateStatus(cart.selectedTable!.id, TableStatus.occupied);
+      }
+    }
 
     // Reduce stock and record movement for each product
     final prodRepo = ref.read(productRepositoryProvider);

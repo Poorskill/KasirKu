@@ -222,7 +222,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                           // Quick Demo logins
                           const Text(
-                            'Demo Quick Fill:',
+                            'Demo Quick Fill (Pilih Role):',
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
@@ -249,6 +249,30 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   height: 38,
                                   onPressed: () => _fillCredentials(
                                       'kasir@kasirku.id', '123456'),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: AppDimensions.spaceXs),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: AppButton(
+                                  text: 'Pelayan (Waiter)',
+                                  variant: ButtonVariant.secondary,
+                                  height: 38,
+                                  onPressed: () => _fillCredentials(
+                                      'waiter@kasirku.id', '123456'),
+                                ),
+                              ),
+                              const SizedBox(width: AppDimensions.spaceXs),
+                              Expanded(
+                                child: AppButton(
+                                  text: 'Dapur (Koki)',
+                                  variant: ButtonVariant.secondary,
+                                  height: 38,
+                                  onPressed: () => _fillCredentials(
+                                      'kitchen@kasirku.id', '123456'),
                                 ),
                               ),
                             ],

@@ -137,10 +137,59 @@ class TableController extends StateNotifier<AsyncValue<void>> {
     }
   }
 
-  Future<bool> closeSession(String sessionId) async {
+  Future<bool> updateSessionAmounts(
+    String sessionId, {
+    required double totalAmount,
+    required double paidAmount,
+    List<String>? orderIds,
+  }) async {
+    try {
+      await _repo.updateSessionAmounts(
+        sessionId,
+        totalAmount: totalAmount,
+        paidAmount: paidAmount,
+        orderIds: orderIds,
+      );
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> closeSession(String sessionId, {double? totalAmount, double? paidAmount}) async {
     state = const AsyncValue.loading();
     try {
+      if (totalAmount != null && paidAmount != null) {
+        await _repo.updateSessionAmounts(
+          sessionId,
+          totalAmount: totalAmount,
+          paidAmount: paidAmount,
+        );
+      }
       await _repo.closeTableSession(sessionId);
+      state = const AsyncValue.data(null);
+      return true;
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+      return false;
+    }
+  }
+
+  Future<bool> closeTable(String tableId, {String? sessionId, double? totalAmount, double? paidAmount}) async {
+    state = const AsyncValue.loading();
+    try {
+      if (sessionId != null && sessionId.isNotEmpty) {
+        if (totalAmount != null && paidAmount != null) {
+          await _repo.updateSessionAmounts(
+            sessionId,
+            totalAmount: totalAmount,
+            paidAmount: paidAmount,
+          );
+        }
+        await _repo.closeTableSession(sessionId);
+      } else {
+        await _repo.updateTableStatus(tableId, TableStatus.available);
+      }
       state = const AsyncValue.data(null);
       return true;
     } catch (e, st) {

@@ -121,6 +121,11 @@ class ReceiptDialog extends StatelessWidget {
                         _metaRow('Waktu',
                             DateFormatter.formatDateTime(transaction.createdAt)),
                         _metaRow('Kasir', transaction.cashierName),
+                        _metaRow('Layanan', transaction.isDineIn
+                            ? (transaction.tableNumber != null
+                                ? 'Dine-in (Meja ${transaction.tableNumber})'
+                                : 'Dine-in')
+                            : 'Takeaway'),
                         _metaRow('Metode', transaction.paymentMethod.label),
                         const SizedBox(height: 8),
                         _dottedLine(),
@@ -244,6 +249,7 @@ class ReceiptDialog extends StatelessWidget {
 ID Transaksi: ${transaction.id}
 Waktu: ${DateFormatter.formatDateTime(transaction.createdAt)}
 Kasir: ${transaction.cashierName}
+Layanan: ${transaction.isDineIn ? (transaction.tableNumber != null ? 'Dine-in (Meja ${transaction.tableNumber})' : 'Dine-in') : 'Takeaway'}
 Metode: ${transaction.paymentMethod.label}
 --------------------------------
 $itemsTxt

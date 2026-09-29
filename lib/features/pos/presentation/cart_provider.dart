@@ -1,7 +1,16 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/utils/pricing_calculator.dart';
 import '../../../models/product.dart';
+import '../../../models/restaurant_table.dart';
 import '../../../models/transaction_item.dart';
+
+enum PosOrderType {
+  dineIn('Makan di Tempat (Dine-in)'),
+  takeaway('Bawa Pulang (Takeaway)');
+
+  final String label;
+  const PosOrderType(this.label);
+}
 
 class CartItem {
   final Product product;
@@ -38,13 +47,20 @@ class CartState {
   final DiscountType discountType;
   final double discountValue;
   final double taxRate; // in percent: e.g. 0.0 or 11.0
+  final PosOrderType orderType;
+  final RestaurantTable? selectedTable;
 
   const CartState({
     this.items = const [],
     this.discountType = DiscountType.fixed,
     this.discountValue = 0.0,
     this.taxRate = 0.0,
+    this.orderType = PosOrderType.dineIn,
+    this.selectedTable,
   });
+
+  bool get isDineIn => orderType == PosOrderType.dineIn;
+  bool get isTakeaway => orderType == PosOrderType.takeaway;
 
   int get totalItemsCount =>
       items.fold(0, (sum, item) => sum + item.quantity);
@@ -72,18 +88,35 @@ class CartState {
     DiscountType? discountType,
     double? discountValue,
     double? taxRate,
+    PosOrderType? orderType,
+    RestaurantTable? selectedTable,
+    bool clearTable = false,
   }) {
     return CartState(
       items: items ?? this.items,
       discountType: discountType ?? this.discountType,
       discountValue: discountValue ?? this.discountValue,
       taxRate: taxRate ?? this.taxRate,
+      orderType: orderType ?? this.orderType,
+      selectedTable: clearTable ? null : (selectedTable ?? this.selectedTable),
     );
   }
 }
 
 class CartNotifier extends StateNotifier<CartState> {
   CartNotifier() : super(const CartState());
+
+  void setOrderType(PosOrderType type) {
+    if (type == PosOrderType.takeaway) {
+      state = state.copyWith(orderType: type, clearTable: true);
+    } else {
+      state = state.copyWith(orderType: type);
+    }
+  }
+
+  void setSelectedTable(RestaurantTable? table) {
+    state = state.copyWith(selectedTable: table, clearTable: table == null);
+  }
 
   void addItem(Product product) {
     if (product.isOutOfStock || !product.isActive) return;
@@ -145,7 +178,10 @@ class CartNotifier extends StateNotifier<CartState> {
   }
 
   void clearCart() {
-    state = const CartState();
+    state = CartState(
+      orderType: state.orderType,
+      selectedTable: state.selectedTable,
+    );
   }
 }
 

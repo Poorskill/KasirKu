@@ -9,8 +9,10 @@ import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../models/restaurant_table.dart';
 import '../../auth/presentation/auth_provider.dart';
+import 'reservation_dialog.dart';
 import 'table_form_dialog.dart';
 import 'table_qr_dialog.dart';
+import 'table_session_bill_dialog.dart';
 import 'tables_provider.dart';
 
 class TablesScreen extends ConsumerWidget {
@@ -73,12 +75,24 @@ class TablesScreen extends ConsumerWidget {
                           ),
                         ],
                       ),
-                      if (isAdmin && !context.isMobile)
-                        AppButton(
-                          text: 'Tambah Meja',
-                          icon: Icons.add,
-                          onPressed: () => TableFormDialog.show(context),
-                        ),
+                      Row(
+                        children: [
+                          AppButton(
+                            text: context.isMobile ? 'Reservasi' : 'Reservasi Meja',
+                            icon: Icons.event_seat_rounded,
+                            variant: ButtonVariant.secondary,
+                            onPressed: () => ReservationDialog.show(context),
+                          ),
+                          if (isAdmin && !context.isMobile) ...[
+                            const SizedBox(width: 8),
+                            AppButton(
+                              text: 'Tambah Meja',
+                              icon: Icons.add,
+                              onPressed: () => TableFormDialog.show(context),
+                            ),
+                          ],
+                        ],
+                      ),
                     ],
                   ),
                   const SizedBox(height: AppDimensions.spaceMd),
@@ -364,6 +378,32 @@ class TablesScreen extends ConsumerWidget {
                 const Divider(height: 1),
                 const SizedBox(height: 12),
 
+                // Table Session Bill Button
+                AppButton(
+                  text: 'Rincian Tagihan Sesi Meja (Bill)',
+                  icon: Icons.receipt_long_rounded,
+                  variant: ButtonVariant.secondary,
+                  height: 42,
+                  onPressed: () {
+                    Navigator.pop(sheetCtx);
+                    TableSessionBillDialog.show(context, table: table);
+                  },
+                ),
+                const SizedBox(height: 8),
+
+                // Make Reservation Button
+                AppButton(
+                  text: 'Reservasi Meja Ini',
+                  icon: Icons.event_seat_rounded,
+                  variant: ButtonVariant.secondary,
+                  height: 42,
+                  onPressed: () {
+                    Navigator.pop(sheetCtx);
+                    ReservationDialog.show(context, preselectedTable: table);
+                  },
+                ),
+                const SizedBox(height: 10),
+
                 // Main Buttons
                 Row(
                   children: [
@@ -586,10 +626,37 @@ class _TableGridCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'QR Stand Aktif',
-                style: TextStyle(fontSize: 10, color: AppColors.textMuted),
-              ),
+              if (table.status == TableStatus.occupied)
+                InkWell(
+                  onTap: () => TableSessionBillDialog.show(context, table: table),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryLight,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.receipt_long, size: 13, color: AppColors.primary),
+                        SizedBox(width: 4),
+                        Text(
+                          'Tagihan Sesi',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                const Text(
+                  'QR Stand Aktif',
+                  style: TextStyle(fontSize: 10, color: AppColors.textMuted),
+                ),
               InkWell(
                 onTap: () => TableQrDialog.show(context, table: table),
                 child: Container(

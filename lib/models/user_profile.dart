@@ -2,7 +2,7 @@ class UserProfile {
   final String id;
   final String name;
   final String email;
-  final String role; // 'admin' | 'cashier'
+  final String role; // 'admin' | 'cashier' | 'waiter' | 'kitchen'
   final String storeName;
   final DateTime createdAt;
 
@@ -16,6 +16,23 @@ class UserProfile {
   });
 
   bool get isAdmin => role == 'admin';
+  bool get isCashier => role == 'cashier';
+  bool get isWaiter => role == 'waiter';
+  bool get isKitchen => role == 'kitchen';
+
+  String get roleDisplayName {
+    switch (role) {
+      case 'cashier':
+        return 'Kasir';
+      case 'waiter':
+        return 'Pelayan';
+      case 'kitchen':
+        return 'Koki';
+      case 'admin':
+      default:
+        return 'Admin';
+    }
+  }
 
   factory UserProfile.fromJson(Map<String, dynamic> json, {String? id}) {
     return UserProfile(

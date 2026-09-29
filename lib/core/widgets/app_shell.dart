@@ -14,13 +14,13 @@ class AppShell extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
-    final isAdmin = user?.isAdmin ?? true;
+    final role = user?.role ?? 'admin';
     final location = GoRouterState.of(context).uri.path;
 
     return ResponsiveLayout(
       mobile: _MobileLayout(
         currentLocation: location,
-        isAdmin: isAdmin,
+        role: role,
         userEmail: user?.email ?? 'admin@kasirku.id',
         userName: user?.name ?? 'Admin KasirKu',
         onLogout: () => ref.read(authNotifierProvider.notifier).logout(),
@@ -28,7 +28,7 @@ class AppShell extends ConsumerWidget {
       ),
       tablet: _TabletLayout(
         currentLocation: location,
-        isAdmin: isAdmin,
+        role: role,
         userEmail: user?.email ?? 'admin@kasirku.id',
         userName: user?.name ?? 'Admin KasirKu',
         onLogout: () => ref.read(authNotifierProvider.notifier).logout(),
@@ -36,7 +36,7 @@ class AppShell extends ConsumerWidget {
       ),
       desktop: _DesktopLayout(
         currentLocation: location,
-        isAdmin: isAdmin,
+        role: role,
         userEmail: user?.email ?? 'admin@kasirku.id',
         userName: user?.name ?? 'Admin KasirKu',
         onLogout: () => ref.read(authNotifierProvider.notifier).logout(),
@@ -48,7 +48,7 @@ class AppShell extends ConsumerWidget {
 
 class _DesktopLayout extends StatelessWidget {
   final String currentLocation;
-  final bool isAdmin;
+  final String role;
   final String userName;
   final String userEmail;
   final VoidCallback onLogout;
@@ -56,12 +56,56 @@ class _DesktopLayout extends StatelessWidget {
 
   const _DesktopLayout({
     required this.currentLocation,
-    required this.isAdmin,
+    required this.role,
     required this.userName,
     required this.userEmail,
     required this.onLogout,
     required this.child,
   });
+
+  bool get isAdmin => role == 'admin';
+
+  String get _portalSubtitle {
+    switch (role) {
+      case 'kitchen':
+        return 'Dapur (KDS)';
+      case 'waiter':
+        return 'Pelayan Resto';
+      case 'cashier':
+        return 'Kasir Terminal';
+      case 'admin':
+      default:
+        return 'Admin Portal';
+    }
+  }
+
+  Color get _roleColor {
+    switch (role) {
+      case 'kitchen':
+        return const Color(0xFFE65100);
+      case 'waiter':
+        return const Color(0xFF7C3AED);
+      case 'cashier':
+        return AppColors.success;
+      case 'admin':
+      default:
+        return AppColors.primary;
+    }
+  }
+
+  String get _roleLabel {
+    switch (role) {
+      case 'kitchen':
+        return 'ROLE: KOKI';
+      case 'waiter':
+        return 'ROLE: PELAYAN';
+      case 'cashier':
+        return 'ROLE: KASIR';
+      case 'admin':
+      default:
+        return 'ROLE: ADMIN';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -109,7 +153,7 @@ class _DesktopLayout extends StatelessWidget {
                               ),
                             ),
                             Text(
-                              isAdmin ? 'Admin Portal' : 'Kasir Terminal',
+                              _portalSubtitle,
                               style: const TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
@@ -133,7 +177,74 @@ class _DesktopLayout extends StatelessWidget {
                       vertical: AppDimensions.spaceXs,
                     ),
                     children: [
-                      if (isAdmin) ...[
+                      if (role == 'kitchen') ...[
+                        _SidebarNavItem(
+                          icon: Icons.outdoor_grill_outlined,
+                          activeIcon: Icons.outdoor_grill_rounded,
+                          label: 'Dapur (KDS)',
+                          isSelected: currentLocation.startsWith('/kitchen'),
+                          onTap: () => context.go('/kitchen'),
+                        ),
+                        _SidebarNavItem(
+                          icon: Icons.view_kanban_outlined,
+                          activeIcon: Icons.view_kanban_rounded,
+                          label: 'Antrean Pesanan',
+                          isSelected: currentLocation.startsWith('/orders'),
+                          onTap: () => context.go('/orders'),
+                        ),
+                      ] else if (role == 'waiter') ...[
+                        _SidebarNavItem(
+                          icon: Icons.room_service_outlined,
+                          activeIcon: Icons.room_service_rounded,
+                          label: 'Pelayan (Waiter)',
+                          isSelected: currentLocation.startsWith('/waiter'),
+                          onTap: () => context.go('/waiter'),
+                        ),
+                        _SidebarNavItem(
+                          icon: Icons.table_restaurant_outlined,
+                          activeIcon: Icons.table_restaurant_rounded,
+                          label: 'Meja & QR Resto',
+                          isSelected: currentLocation.startsWith('/tables'),
+                          onTap: () => context.go('/tables'),
+                        ),
+                        _SidebarNavItem(
+                          icon: Icons.view_kanban_outlined,
+                          activeIcon: Icons.view_kanban_rounded,
+                          label: 'Antrean Pesanan',
+                          isSelected: currentLocation.startsWith('/orders'),
+                          onTap: () => context.go('/orders'),
+                        ),
+                      ] else if (role == 'cashier') ...[
+                        _SidebarNavItem(
+                          icon: Icons.point_of_sale_outlined,
+                          activeIcon: Icons.point_of_sale,
+                          label: 'Kasir (POS)',
+                          isSelected: currentLocation.startsWith('/pos'),
+                          onTap: () => context.go('/pos'),
+                        ),
+                        _SidebarNavItem(
+                          icon: Icons.view_kanban_outlined,
+                          activeIcon: Icons.view_kanban_rounded,
+                          label: 'Antrean Pesanan',
+                          isSelected: currentLocation.startsWith('/orders'),
+                          onTap: () => context.go('/orders'),
+                        ),
+                        _SidebarNavItem(
+                          icon: Icons.table_restaurant_outlined,
+                          activeIcon: Icons.table_restaurant_rounded,
+                          label: 'Meja & QR Resto',
+                          isSelected: currentLocation.startsWith('/tables'),
+                          onTap: () => context.go('/tables'),
+                        ),
+                        _SidebarNavItem(
+                          icon: Icons.receipt_long_outlined,
+                          activeIcon: Icons.receipt_long_rounded,
+                          label: 'Transaksi',
+                          isSelected: currentLocation.startsWith('/transactions'),
+                          onTap: () => context.go('/transactions'),
+                        ),
+                      ] else ...[
+                        // Admin: all navigation items
                         _SidebarNavItem(
                           icon: Icons.dashboard_outlined,
                           activeIcon: Icons.dashboard_rounded,
@@ -141,43 +252,41 @@ class _DesktopLayout extends StatelessWidget {
                           isSelected: currentLocation == '/',
                           onTap: () => context.go('/'),
                         ),
-                      ],
-                      _SidebarNavItem(
-                        icon: Icons.point_of_sale_outlined,
-                        activeIcon: Icons.point_of_sale,
-                        label: 'Kasir (POS)',
-                        isSelected: currentLocation.startsWith('/pos'),
-                        onTap: () => context.go('/pos'),
-                      ),
-                      _SidebarNavItem(
-                        icon: Icons.view_kanban_outlined,
-                        activeIcon: Icons.view_kanban_rounded,
-                        label: 'Antrean Pesanan',
-                        isSelected: currentLocation.startsWith('/orders'),
-                        onTap: () => context.go('/orders'),
-                      ),
-                      _SidebarNavItem(
-                        icon: Icons.outdoor_grill_outlined,
-                        activeIcon: Icons.outdoor_grill_rounded,
-                        label: 'Dapur (KDS)',
-                        isSelected: currentLocation.startsWith('/kitchen'),
-                        onTap: () => context.go('/kitchen'),
-                      ),
-                      _SidebarNavItem(
-                        icon: Icons.room_service_outlined,
-                        activeIcon: Icons.room_service_rounded,
-                        label: 'Pelayan (Waiter)',
-                        isSelected: currentLocation.startsWith('/waiter'),
-                        onTap: () => context.go('/waiter'),
-                      ),
-                      _SidebarNavItem(
-                        icon: Icons.table_restaurant_outlined,
-                        activeIcon: Icons.table_restaurant_rounded,
-                        label: 'Meja & QR Resto',
-                        isSelected: currentLocation.startsWith('/tables'),
-                        onTap: () => context.go('/tables'),
-                      ),
-                      if (isAdmin) ...[
+                        _SidebarNavItem(
+                          icon: Icons.point_of_sale_outlined,
+                          activeIcon: Icons.point_of_sale,
+                          label: 'Kasir (POS)',
+                          isSelected: currentLocation.startsWith('/pos'),
+                          onTap: () => context.go('/pos'),
+                        ),
+                        _SidebarNavItem(
+                          icon: Icons.view_kanban_outlined,
+                          activeIcon: Icons.view_kanban_rounded,
+                          label: 'Antrean Pesanan',
+                          isSelected: currentLocation.startsWith('/orders'),
+                          onTap: () => context.go('/orders'),
+                        ),
+                        _SidebarNavItem(
+                          icon: Icons.outdoor_grill_outlined,
+                          activeIcon: Icons.outdoor_grill_rounded,
+                          label: 'Dapur (KDS)',
+                          isSelected: currentLocation.startsWith('/kitchen'),
+                          onTap: () => context.go('/kitchen'),
+                        ),
+                        _SidebarNavItem(
+                          icon: Icons.room_service_outlined,
+                          activeIcon: Icons.room_service_rounded,
+                          label: 'Pelayan (Waiter)',
+                          isSelected: currentLocation.startsWith('/waiter'),
+                          onTap: () => context.go('/waiter'),
+                        ),
+                        _SidebarNavItem(
+                          icon: Icons.table_restaurant_outlined,
+                          activeIcon: Icons.table_restaurant_rounded,
+                          label: 'Meja & QR Resto',
+                          isSelected: currentLocation.startsWith('/tables'),
+                          onTap: () => context.go('/tables'),
+                        ),
                         _SidebarNavItem(
                           icon: Icons.inventory_2_outlined,
                           activeIcon: Icons.inventory_2_rounded,
@@ -192,15 +301,13 @@ class _DesktopLayout extends StatelessWidget {
                           isSelected: currentLocation.startsWith('/inventory'),
                           onTap: () => context.go('/inventory'),
                         ),
-                      ],
-                      _SidebarNavItem(
-                        icon: Icons.receipt_long_outlined,
-                        activeIcon: Icons.receipt_long_rounded,
-                        label: 'Transaksi',
-                        isSelected: currentLocation.startsWith('/transactions'),
-                        onTap: () => context.go('/transactions'),
-                      ),
-                      if (isAdmin) ...[
+                        _SidebarNavItem(
+                          icon: Icons.receipt_long_outlined,
+                          activeIcon: Icons.receipt_long_rounded,
+                          label: 'Transaksi',
+                          isSelected: currentLocation.startsWith('/transactions'),
+                          onTap: () => context.go('/transactions'),
+                        ),
                         _SidebarNavItem(
                           icon: Icons.bar_chart_rounded,
                           activeIcon: Icons.bar_chart_rounded,
@@ -255,11 +362,11 @@ class _DesktopLayout extends StatelessWidget {
                                   ),
                                 ),
                                 Text(
-                                  isAdmin ? 'ROLE: ADMIN' : 'ROLE: KASIR',
+                                  _roleLabel,
                                   style: TextStyle(
                                     fontSize: 10,
                                     fontWeight: FontWeight.w700,
-                                    color: isAdmin ? AppColors.primary : AppColors.success,
+                                    color: _roleColor,
                                   ),
                                 ),
                               ],
@@ -327,7 +434,7 @@ class _DesktopLayout extends StatelessWidget {
 
 class _TabletLayout extends StatelessWidget {
   final String currentLocation;
-  final bool isAdmin;
+  final String role;
   final String userName;
   final String userEmail;
   final VoidCallback onLogout;
@@ -335,12 +442,14 @@ class _TabletLayout extends StatelessWidget {
 
   const _TabletLayout({
     required this.currentLocation,
-    required this.isAdmin,
+    required this.role,
     required this.userName,
     required this.userEmail,
     required this.onLogout,
     required this.child,
   });
+
+  bool get isAdmin => role == 'admin';
 
   @override
   Widget build(BuildContext context) {
@@ -375,7 +484,73 @@ class _TabletLayout extends StatelessWidget {
                   child: ListView(
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     children: [
-                      if (isAdmin)
+                      if (role == 'kitchen') ...[
+                        _CompactNavItem(
+                          icon: Icons.outdoor_grill_outlined,
+                          activeIcon: Icons.outdoor_grill_rounded,
+                          tooltip: 'Dapur (KDS)',
+                          isSelected: currentLocation.startsWith('/kitchen'),
+                          onTap: () => context.go('/kitchen'),
+                        ),
+                        _CompactNavItem(
+                          icon: Icons.view_kanban_outlined,
+                          activeIcon: Icons.view_kanban_rounded,
+                          tooltip: 'Antrean Pesanan',
+                          isSelected: currentLocation.startsWith('/orders'),
+                          onTap: () => context.go('/orders'),
+                        ),
+                      ] else if (role == 'waiter') ...[
+                        _CompactNavItem(
+                          icon: Icons.room_service_outlined,
+                          activeIcon: Icons.room_service_rounded,
+                          tooltip: 'Pelayan (Waiter)',
+                          isSelected: currentLocation.startsWith('/waiter'),
+                          onTap: () => context.go('/waiter'),
+                        ),
+                        _CompactNavItem(
+                          icon: Icons.table_restaurant_outlined,
+                          activeIcon: Icons.table_restaurant_rounded,
+                          tooltip: 'Meja & QR Resto',
+                          isSelected: currentLocation.startsWith('/tables'),
+                          onTap: () => context.go('/tables'),
+                        ),
+                        _CompactNavItem(
+                          icon: Icons.view_kanban_outlined,
+                          activeIcon: Icons.view_kanban_rounded,
+                          tooltip: 'Antrean Pesanan',
+                          isSelected: currentLocation.startsWith('/orders'),
+                          onTap: () => context.go('/orders'),
+                        ),
+                      ] else if (role == 'cashier') ...[
+                        _CompactNavItem(
+                          icon: Icons.point_of_sale_outlined,
+                          activeIcon: Icons.point_of_sale,
+                          tooltip: 'Kasir',
+                          isSelected: currentLocation.startsWith('/pos'),
+                          onTap: () => context.go('/pos'),
+                        ),
+                        _CompactNavItem(
+                          icon: Icons.view_kanban_outlined,
+                          activeIcon: Icons.view_kanban_rounded,
+                          tooltip: 'Antrean Pesanan',
+                          isSelected: currentLocation.startsWith('/orders'),
+                          onTap: () => context.go('/orders'),
+                        ),
+                        _CompactNavItem(
+                          icon: Icons.table_restaurant_outlined,
+                          activeIcon: Icons.table_restaurant_rounded,
+                          tooltip: 'Meja & QR Resto',
+                          isSelected: currentLocation.startsWith('/tables'),
+                          onTap: () => context.go('/tables'),
+                        ),
+                        _CompactNavItem(
+                          icon: Icons.receipt_long_outlined,
+                          activeIcon: Icons.receipt_long_rounded,
+                          tooltip: 'Transaksi',
+                          isSelected: currentLocation.startsWith('/transactions'),
+                          onTap: () => context.go('/transactions'),
+                        ),
+                      ] else ...[
                         _CompactNavItem(
                           icon: Icons.dashboard_outlined,
                           activeIcon: Icons.dashboard_rounded,
@@ -383,42 +558,41 @@ class _TabletLayout extends StatelessWidget {
                           isSelected: currentLocation == '/',
                           onTap: () => context.go('/'),
                         ),
-                      _CompactNavItem(
-                        icon: Icons.point_of_sale_outlined,
-                        activeIcon: Icons.point_of_sale,
-                        tooltip: 'Kasir',
-                        isSelected: currentLocation.startsWith('/pos'),
-                        onTap: () => context.go('/pos'),
-                      ),
-                      _CompactNavItem(
-                        icon: Icons.view_kanban_outlined,
-                        activeIcon: Icons.view_kanban_rounded,
-                        tooltip: 'Antrean Pesanan',
-                        isSelected: currentLocation.startsWith('/orders'),
-                        onTap: () => context.go('/orders'),
-                      ),
-                      _CompactNavItem(
-                        icon: Icons.outdoor_grill_outlined,
-                        activeIcon: Icons.outdoor_grill_rounded,
-                        tooltip: 'Dapur (KDS)',
-                        isSelected: currentLocation.startsWith('/kitchen'),
-                        onTap: () => context.go('/kitchen'),
-                      ),
-                      _CompactNavItem(
-                        icon: Icons.room_service_outlined,
-                        activeIcon: Icons.room_service_rounded,
-                        tooltip: 'Pelayan (Waiter)',
-                        isSelected: currentLocation.startsWith('/waiter'),
-                        onTap: () => context.go('/waiter'),
-                      ),
-                      _CompactNavItem(
-                        icon: Icons.table_restaurant_outlined,
-                        activeIcon: Icons.table_restaurant_rounded,
-                        tooltip: 'Meja & QR Resto',
-                        isSelected: currentLocation.startsWith('/tables'),
-                        onTap: () => context.go('/tables'),
-                      ),
-                      if (isAdmin) ...[
+                        _CompactNavItem(
+                          icon: Icons.point_of_sale_outlined,
+                          activeIcon: Icons.point_of_sale,
+                          tooltip: 'Kasir',
+                          isSelected: currentLocation.startsWith('/pos'),
+                          onTap: () => context.go('/pos'),
+                        ),
+                        _CompactNavItem(
+                          icon: Icons.view_kanban_outlined,
+                          activeIcon: Icons.view_kanban_rounded,
+                          tooltip: 'Antrean Pesanan',
+                          isSelected: currentLocation.startsWith('/orders'),
+                          onTap: () => context.go('/orders'),
+                        ),
+                        _CompactNavItem(
+                          icon: Icons.outdoor_grill_outlined,
+                          activeIcon: Icons.outdoor_grill_rounded,
+                          tooltip: 'Dapur (KDS)',
+                          isSelected: currentLocation.startsWith('/kitchen'),
+                          onTap: () => context.go('/kitchen'),
+                        ),
+                        _CompactNavItem(
+                          icon: Icons.room_service_outlined,
+                          activeIcon: Icons.room_service_rounded,
+                          tooltip: 'Pelayan (Waiter)',
+                          isSelected: currentLocation.startsWith('/waiter'),
+                          onTap: () => context.go('/waiter'),
+                        ),
+                        _CompactNavItem(
+                          icon: Icons.table_restaurant_outlined,
+                          activeIcon: Icons.table_restaurant_rounded,
+                          tooltip: 'Meja & QR Resto',
+                          isSelected: currentLocation.startsWith('/tables'),
+                          onTap: () => context.go('/tables'),
+                        ),
                         _CompactNavItem(
                           icon: Icons.inventory_2_outlined,
                           activeIcon: Icons.inventory_2_rounded,
@@ -433,15 +607,13 @@ class _TabletLayout extends StatelessWidget {
                           isSelected: currentLocation.startsWith('/inventory'),
                           onTap: () => context.go('/inventory'),
                         ),
-                      ],
-                      _CompactNavItem(
-                        icon: Icons.receipt_long_outlined,
-                        activeIcon: Icons.receipt_long_rounded,
-                        tooltip: 'Transaksi',
-                        isSelected: currentLocation.startsWith('/transactions'),
-                        onTap: () => context.go('/transactions'),
-                      ),
-                      if (isAdmin) ...[
+                        _CompactNavItem(
+                          icon: Icons.receipt_long_outlined,
+                          activeIcon: Icons.receipt_long_rounded,
+                          tooltip: 'Transaksi',
+                          isSelected: currentLocation.startsWith('/transactions'),
+                          onTap: () => context.go('/transactions'),
+                        ),
                         _CompactNavItem(
                           icon: Icons.bar_chart_rounded,
                           activeIcon: Icons.bar_chart_rounded,
@@ -478,7 +650,7 @@ class _TabletLayout extends StatelessWidget {
 
 class _MobileLayout extends StatelessWidget {
   final String currentLocation;
-  final bool isAdmin;
+  final String role;
   final String userName;
   final String userEmail;
   final VoidCallback onLogout;
@@ -486,19 +658,119 @@ class _MobileLayout extends StatelessWidget {
 
   const _MobileLayout({
     required this.currentLocation,
-    required this.isAdmin,
+    required this.role,
     required this.userName,
     required this.userEmail,
     required this.onLogout,
     required this.child,
   });
 
+  bool get isAdmin => role == 'admin';
+
   @override
   Widget build(BuildContext context) {
-    if (!isAdmin) {
+    if (role == 'kitchen') {
+      int idx = 0;
+      if (currentLocation.startsWith('/orders')) idx = 1;
+
+      return Scaffold(
+        body: child,
+        bottomNavigationBar: Container(
+          decoration: const BoxDecoration(
+            color: AppColors.surface,
+            border: Border(top: BorderSide(color: AppColors.border, width: 1)),
+          ),
+          child: SafeArea(
+            child: NavigationBar(
+              selectedIndex: idx,
+              onDestinationSelected: (dest) {
+                if (dest == 0) context.go('/kitchen');
+                if (dest == 1) context.go('/orders');
+                if (dest == 2) onLogout();
+              },
+              backgroundColor: AppColors.surface,
+              indicatorColor: AppColors.primaryLight,
+              elevation: 0,
+              height: 64,
+              destinations: const [
+                NavigationDestination(
+                  icon: Icon(Icons.outdoor_grill_outlined),
+                  selectedIcon: Icon(Icons.outdoor_grill_rounded, color: AppColors.primary),
+                  label: 'Dapur (KDS)',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.view_kanban_outlined),
+                  selectedIcon: Icon(Icons.view_kanban_rounded, color: AppColors.primary),
+                  label: 'Antrean',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.logout_rounded),
+                  label: 'Keluar',
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (role == 'waiter') {
+      int idx = 0;
+      if (currentLocation.startsWith('/tables')) idx = 1;
+      if (currentLocation.startsWith('/orders')) idx = 2;
+
+      return Scaffold(
+        body: child,
+        bottomNavigationBar: Container(
+          decoration: const BoxDecoration(
+            color: AppColors.surface,
+            border: Border(top: BorderSide(color: AppColors.border, width: 1)),
+          ),
+          child: SafeArea(
+            child: NavigationBar(
+              selectedIndex: idx,
+              onDestinationSelected: (dest) {
+                if (dest == 0) context.go('/waiter');
+                if (dest == 1) context.go('/tables');
+                if (dest == 2) context.go('/orders');
+                if (dest == 3) onLogout();
+              },
+              backgroundColor: AppColors.surface,
+              indicatorColor: AppColors.primaryLight,
+              elevation: 0,
+              height: 64,
+              destinations: const [
+                NavigationDestination(
+                  icon: Icon(Icons.room_service_outlined),
+                  selectedIcon: Icon(Icons.room_service_rounded, color: AppColors.primary),
+                  label: 'Pelayan',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.table_restaurant_outlined),
+                  selectedIcon: Icon(Icons.table_restaurant_rounded, color: AppColors.primary),
+                  label: 'Meja',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.view_kanban_outlined),
+                  selectedIcon: Icon(Icons.view_kanban_rounded, color: AppColors.primary),
+                  label: 'Antrean',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.logout_rounded),
+                  label: 'Keluar',
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (role == 'cashier') {
       int cashierIndex = 0;
-      if (currentLocation.startsWith('/tables')) cashierIndex = 1;
-      if (currentLocation.startsWith('/transactions')) cashierIndex = 2;
+      if (currentLocation.startsWith('/orders')) cashierIndex = 1;
+      if (currentLocation.startsWith('/tables')) cashierIndex = 2;
+      if (currentLocation.startsWith('/transactions')) cashierIndex = 3;
 
       return Scaffold(
         body: child,
@@ -512,9 +784,10 @@ class _MobileLayout extends StatelessWidget {
               selectedIndex: cashierIndex,
               onDestinationSelected: (idx) {
                 if (idx == 0) context.go('/pos');
-                if (idx == 1) context.go('/tables');
-                if (idx == 2) context.go('/transactions');
-                if (idx == 3) onLogout();
+                if (idx == 1) context.go('/orders');
+                if (idx == 2) context.go('/tables');
+                if (idx == 3) context.go('/transactions');
+                if (idx == 4) onLogout();
               },
               backgroundColor: AppColors.surface,
               indicatorColor: AppColors.primaryLight,
@@ -525,6 +798,11 @@ class _MobileLayout extends StatelessWidget {
                   icon: Icon(Icons.point_of_sale_outlined),
                   selectedIcon: Icon(Icons.point_of_sale, color: AppColors.primary),
                   label: 'Kasir',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.view_kanban_outlined),
+                  selectedIcon: Icon(Icons.view_kanban_rounded, color: AppColors.primary),
+                  label: 'Antrean',
                 ),
                 NavigationDestination(
                   icon: Icon(Icons.table_restaurant_outlined),
@@ -552,6 +830,15 @@ class _MobileLayout extends StatelessWidget {
     if (currentLocation.startsWith('/pos')) adminIndex = 1;
     if (currentLocation.startsWith('/products')) adminIndex = 2;
     if (currentLocation.startsWith('/transactions')) adminIndex = 3;
+    if (currentLocation.startsWith('/inventory') ||
+        currentLocation.startsWith('/reports') ||
+        currentLocation.startsWith('/settings') ||
+        currentLocation.startsWith('/orders') ||
+        currentLocation.startsWith('/kitchen') ||
+        currentLocation.startsWith('/waiter') ||
+        currentLocation.startsWith('/tables')) {
+      adminIndex = 4;
+    }
     if (currentLocation.startsWith('/inventory') ||
         currentLocation.startsWith('/reports') ||
         currentLocation.startsWith('/settings')) {

@@ -70,6 +70,16 @@ class HybridAuthRepository implements AuthRepository {
 
   @override
   Future<UserProfile> login(String email, String password) async {
+    final lowerEmail = email.toLowerCase();
+    String detectedRole = 'admin';
+    if (lowerEmail.contains('kitchen') || lowerEmail.contains('koki')) {
+      detectedRole = 'kitchen';
+    } else if (lowerEmail.contains('waiter') || lowerEmail.contains('pelayan')) {
+      detectedRole = 'waiter';
+    } else if (lowerEmail.contains('kasir') || lowerEmail.contains('cashier')) {
+      detectedRole = 'cashier';
+    }
+
     if (_firebaseReady) {
       try {
         final cred = await FirebaseAuth.instance.signInWithEmailAndPassword(
@@ -81,7 +91,7 @@ class HybridAuthRepository implements AuthRepository {
           id: fbUser.uid,
           name: fbUser.displayName ?? (email.split('@').first),
           email: fbUser.email ?? email,
-          role: email.contains('kasir') ? 'cashier' : 'admin',
+          role: detectedRole,
           storeName: 'Toko Berkah UMKM',
           createdAt: DateTime.now(),
         );
@@ -101,12 +111,11 @@ class HybridAuthRepository implements AuthRepository {
       throw Exception('Password minimal 6 karakter');
     }
 
-    final role = email.toLowerCase().contains('kasir') ? 'cashier' : 'admin';
     final user = UserProfile(
       id: 'usr-${DateTime.now().millisecondsSinceEpoch}',
       name: email.split('@').first.replaceAll('.', ' ').toUpperCase(),
       email: email.trim(),
-      role: role,
+      role: detectedRole,
       storeName: 'Toko Berkah UMKM',
       createdAt: DateTime.now(),
     );

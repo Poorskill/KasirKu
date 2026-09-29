@@ -42,17 +42,34 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return '/login';
       }
       if (isLoggedIn && isLoggingIn) {
-        return user.isAdmin ? '/' : '/pos';
+        if (user.isKitchen) return '/kitchen';
+        if (user.isWaiter) return '/waiter';
+        if (user.isCashier) return '/pos';
+        return '/';
       }
 
-      // Cashier route guard
-      if (isLoggedIn && !user.isAdmin) {
-        if (path == '/' ||
-            path.startsWith('/products') ||
-            path.startsWith('/inventory') ||
-            path.startsWith('/reports') ||
-            path.startsWith('/settings')) {
-          return '/pos';
+      // Role-based route guards
+      if (isLoggedIn) {
+        if (user.isKitchen) {
+          if (!path.startsWith('/kitchen') && !path.startsWith('/orders')) {
+            return '/kitchen';
+          }
+        } else if (user.isWaiter) {
+          if (!path.startsWith('/waiter') &&
+              !path.startsWith('/tables') &&
+              !path.startsWith('/orders')) {
+            return '/waiter';
+          }
+        } else if (user.isCashier) {
+          if (path == '/' ||
+              path.startsWith('/products') ||
+              path.startsWith('/inventory') ||
+              path.startsWith('/reports') ||
+              path.startsWith('/settings') ||
+              path.startsWith('/kitchen') ||
+              path.startsWith('/waiter')) {
+            return '/pos';
+          }
         }
       }
 

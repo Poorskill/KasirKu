@@ -15,6 +15,7 @@ abstract class OrderRepository {
   Future<RestaurantOrder?> getOrderById(String id);
   Future<void> createOrder(RestaurantOrder order);
   Future<void> updateOrderStatus(String orderId, OrderStatus status);
+  Future<void> markOrderPaid(String orderId);
   Future<bool> verifyAndSettlePayment(String paymentId);
 
   Stream<List<OnlinePayment>> watchPayments();
@@ -207,6 +208,37 @@ class HybridOrderRepository implements OrderRepository {
         orderStatus: status,
         updatedAt: now,
         completedAt: status == OrderStatus.completed ? now : null,
+      );
+      _ordersController.add(List.unmodifiable(_orders));
+    }
+  }
+
+  @override
+  Future<void> markOrderPaid(String orderId) async {
+    final now = DateTime.now();
+    if (_firebaseReady) {
+      try {
+        await FirebaseFirestore.instance
+            .collection('orders')
+            .doc(orderId)
+            .update({
+          'paymentStatus': 'paid',
+          'orderStatus': OrderStatus.paid.name,
+          'updatedAt': now.toIso8601String(),
+        });
+        return;
+      } catch (_) {}
+    }
+
+    final index = _orders.indexWhere((o) => o.id == orderId);
+    if (index != -1) {
+      final cur = _orders[index];
+      _orders[index] = cur.copyWith(
+        paymentStatus: 'paid',
+        orderStatus: cur.orderStatus == OrderStatus.pendingPayment
+            ? OrderStatus.paid
+            : cur.orderStatus,
+        updatedAt: now,
       );
       _ordersController.add(List.unmodifiable(_orders));
     }

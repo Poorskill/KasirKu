@@ -35,6 +35,9 @@ class TransactionRecord {
   final PaymentMethod paymentMethod;
   final double paymentAmount;
   final double change;
+  final String orderType; // 'dineIn' | 'takeaway'
+  final String? tableId;
+  final String? tableNumber;
   final DateTime createdAt;
   final String status; // 'success' | 'cancelled'
 
@@ -50,9 +53,15 @@ class TransactionRecord {
     required this.paymentMethod,
     required this.paymentAmount,
     required this.change,
+    this.orderType = 'takeaway',
+    this.tableId,
+    this.tableNumber,
     required this.createdAt,
     this.status = 'success',
   });
+
+  bool get isDineIn => orderType == 'dineIn';
+  bool get isTakeaway => orderType == 'takeaway';
 
   factory TransactionRecord.fromJson(Map<String, dynamic> json, {String? id}) {
     return TransactionRecord(
@@ -69,6 +78,9 @@ class TransactionRecord {
       paymentMethod: PaymentMethod.fromString(json['paymentMethod'] as String? ?? 'cash'),
       paymentAmount: (json['paymentAmount'] as num?)?.toDouble() ?? 0.0,
       change: (json['change'] as num?)?.toDouble() ?? 0.0,
+      orderType: json['orderType'] as String? ?? 'takeaway',
+      tableId: json['tableId'] as String?,
+      tableNumber: json['tableNumber'] as String?,
       createdAt: json['createdAt'] != null
           ? DateTime.tryParse(json['createdAt'].toString()) ?? DateTime.now()
           : DateTime.now(),
@@ -89,6 +101,9 @@ class TransactionRecord {
       'paymentMethod': paymentMethod.name,
       'paymentAmount': paymentAmount,
       'change': change,
+      'orderType': orderType,
+      'tableId': tableId,
+      'tableNumber': tableNumber,
       'createdAt': createdAt.toIso8601String(),
       'status': status,
     };

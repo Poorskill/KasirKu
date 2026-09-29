@@ -65,6 +65,18 @@ class OrderController extends StateNotifier<AsyncValue<void>> {
     }
   }
 
+  Future<bool> markOrderPaid(String orderId) async {
+    state = const AsyncValue.loading();
+    try {
+      await _repo.markOrderPaid(orderId);
+      state = const AsyncValue.data(null);
+      return true;
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+      return false;
+    }
+  }
+
   Future<bool> verifyPayment(String paymentId) async {
     state = const AsyncValue.loading();
     try {
