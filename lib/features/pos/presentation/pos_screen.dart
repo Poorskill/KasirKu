@@ -6,6 +6,7 @@ import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../core/widgets/app_badge.dart';
 import '../../../core/widgets/app_card.dart';
+import '../../../core/widgets/app_product_image.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../models/product.dart';
@@ -330,23 +331,40 @@ class _ProductGridCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Thumbnail / Icon Header
+          // Thumbnail / Photo Header
           Expanded(
-            child: Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: isOutOfStock
-                    ? AppColors.dangerBg.withValues(alpha: 0.3)
-                    : AppColors.primaryLight,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Center(
-                child: Icon(
-                  Icons.restaurant_menu_rounded,
-                  size: 32,
-                  color: isOutOfStock ? AppColors.danger : AppColors.primary,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                AppProductImage(
+                  imageUrl: product.imageUrl,
+                  borderRadius: 10,
                 ),
-              ),
+                if (isOutOfStock)
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.45),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    alignment: Alignment.center,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppColors.danger,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Text(
+                        'HABIS',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
           const SizedBox(height: 8),

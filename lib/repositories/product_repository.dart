@@ -51,6 +51,8 @@ class HybridProductRepository implements ProductRepository {
         stock: 35,
         minimumStock: 10,
         isActive: true,
+        imageUrl:
+            'https://images.unsplash.com/photo-1541167760496-1628856ab772?w=500&auto=format&fit=crop&q=80',
         description: 'Espresso dengan susu segar dan gula aren asli',
         createdAt: now.subtract(const Duration(days: 30)),
         updatedAt: now,
@@ -65,6 +67,8 @@ class HybridProductRepository implements ProductRepository {
         stock: 80,
         minimumStock: 15,
         isActive: true,
+        imageUrl:
+            'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=500&auto=format&fit=crop&q=80',
         description: 'Teh melati manis segar dingin',
         createdAt: now.subtract(const Duration(days: 28)),
         updatedAt: now,
@@ -79,6 +83,8 @@ class HybridProductRepository implements ProductRepository {
         stock: 18,
         minimumStock: 5,
         isActive: true,
+        imageUrl:
+            'https://images.unsplash.com/photo-1612927601601-6638404737ce?w=500&auto=format&fit=crop&q=80',
         description: 'Mie goreng komplit dengan telur, ayam suwir, dan sayuran',
         createdAt: now.subtract(const Duration(days: 25)),
         updatedAt: now,
@@ -93,6 +99,8 @@ class HybridProductRepository implements ProductRepository {
         stock: 7,
         minimumStock: 10,
         isActive: true,
+        imageUrl:
+            'https://images.unsplash.com/photo-1584776296944-ab6fb57b0bdd?w=500&auto=format&fit=crop&q=80',
         description: 'Roti bakar lezat dengan taburan cokelat melimpah dan keju parut',
         createdAt: now.subtract(const Duration(days: 20)),
         updatedAt: now,
@@ -107,6 +115,8 @@ class HybridProductRepository implements ProductRepository {
         stock: 50,
         minimumStock: 12,
         isActive: true,
+        imageUrl:
+            'https://images.unsplash.com/photo-1548839140-29a749e1bc4e?w=500&auto=format&fit=crop&q=80',
         description: 'Air mineral pegunungan dalam kemasan botol',
         createdAt: now.subtract(const Duration(days: 15)),
         updatedAt: now,
@@ -121,6 +131,8 @@ class HybridProductRepository implements ProductRepository {
         stock: 4,
         minimumStock: 8,
         isActive: true,
+        imageUrl:
+            'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=500&auto=format&fit=crop&q=80',
         description: 'Pisang raja goreng renyah dengan susu kental manis',
         createdAt: now.subtract(const Duration(days: 10)),
         updatedAt: now,
@@ -135,6 +147,8 @@ class HybridProductRepository implements ProductRepository {
         stock: 0,
         minimumStock: 5,
         isActive: true,
+        imageUrl:
+            'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=500&auto=format&fit=crop&q=80',
         description: 'Nasi goreng bumbu terasi tradisional dengan telur ceplok',
         createdAt: now.subtract(const Duration(days: 8)),
         updatedAt: now,
@@ -149,6 +163,8 @@ class HybridProductRepository implements ProductRepository {
         stock: 22,
         minimumStock: 8,
         isActive: true,
+        imageUrl:
+            'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=500&auto=format&fit=crop&q=80',
         description: 'Double shot espresso dengan air panas',
         createdAt: now.subtract(const Duration(days: 5)),
         updatedAt: now,

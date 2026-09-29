@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimensions.dart';
 import '../../../core/widgets/app_button.dart';
+import '../../../core/widgets/app_product_image.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../models/category.dart';
 import '../../../models/product.dart';
@@ -35,6 +36,7 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
   late TextEditingController _stockController;
   late TextEditingController _minStockController;
   late TextEditingController _descController;
+  late TextEditingController _imageUrlController;
   String _selectedCategory = 'cat-makanan';
   bool _isActive = true;
 
@@ -55,6 +57,7 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
     _minStockController = TextEditingController(
         text: p != null ? p.minimumStock.toString() : '5');
     _descController = TextEditingController(text: p?.description ?? '');
+    _imageUrlController = TextEditingController(text: p?.imageUrl ?? '');
     _isActive = p?.isActive ?? true;
     if (p != null && p.categoryId.isNotEmpty) {
       _selectedCategory = p.categoryId;
@@ -75,6 +78,7 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
     _stockController.dispose();
     _minStockController.dispose();
     _descController.dispose();
+    _imageUrlController.dispose();
     super.dispose();
   }
 
@@ -91,6 +95,9 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
       costPrice: double.tryParse(_costPriceController.text) ?? 0.0,
       stock: int.tryParse(_stockController.text) ?? 0,
       minimumStock: int.tryParse(_minStockController.text) ?? 5,
+      imageUrl: _imageUrlController.text.trim().isEmpty
+          ? null
+          : _imageUrlController.text.trim(),
       description: _descController.text.trim(),
       isActive: _isActive,
       createdAt: widget.productToEdit?.createdAt ?? now,
@@ -339,6 +346,31 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
                                 hint: '5',
                                 controller: _minStockController,
                                 keyboardType: TextInputType.number,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: AppDimensions.spaceSm),
+
+                        // Foto Produk URL + Preview
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            AppProductImage(
+                              imageUrl: _imageUrlController.text.trim().isEmpty
+                                  ? null
+                                  : _imageUrlController.text.trim(),
+                              width: 52,
+                              height: 52,
+                              borderRadius: 8,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: AppTextField(
+                                label: 'URL Foto Produk (Opsional)',
+                                hint: 'https://images.unsplash.com/...',
+                                controller: _imageUrlController,
+                                onChanged: (_) => setState(() {}),
                               ),
                             ),
                           ],

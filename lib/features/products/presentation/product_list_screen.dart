@@ -7,6 +7,7 @@ import '../../../core/utils/responsive.dart';
 import '../../../core/widgets/app_badge.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_card.dart';
+import '../../../core/widgets/app_product_image.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../models/product.dart';
@@ -445,18 +446,11 @@ class ProductListScreen extends ConsumerWidget {
                       flex: 4,
                       child: Row(
                         children: [
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: product.isActive ? AppColors.primaryLight : AppColors.secondaryBtnBg,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Icon(
-                              Icons.shopping_bag_outlined,
-                              color: product.isActive ? AppColors.primary : AppColors.textMuted,
-                              size: 20,
-                            ),
+                          AppProductImage(
+                            imageUrl: product.imageUrl,
+                            width: 44,
+                            height: 44,
+                            borderRadius: 8,
                           ),
                           const SizedBox(width: 12),
                           Expanded(
@@ -609,18 +603,11 @@ class ProductListScreen extends ConsumerWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: product.isActive ? AppColors.primaryLight : AppColors.secondaryBtnBg,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(
-                      Icons.shopping_bag_outlined,
-                      color: product.isActive ? AppColors.primary : AppColors.textMuted,
-                      size: 22,
-                    ),
+                  AppProductImage(
+                    imageUrl: product.imageUrl,
+                    width: 48,
+                    height: 48,
+                    borderRadius: 10,
                   ),
                   const SizedBox(width: 12),
                   Expanded(
