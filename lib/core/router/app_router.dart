@@ -84,6 +84,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(
+        path: '/order/:tableToken',
+        builder: (context, state) => CustomerOrderScreen(
+          storeId: 'store-default',
+          tableToken: state.pathParameters['tableToken'] ?? '',
+        ),
+      ),
+      GoRoute(
         path: '/login',
         builder: (context, state) => const LoginScreen(),
       ),
