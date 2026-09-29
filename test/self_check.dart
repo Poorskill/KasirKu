@@ -1,7 +1,9 @@
 import 'package:kasirku/core/utils/currency_formatter.dart';
 import 'package:kasirku/core/utils/pricing_calculator.dart';
 import 'package:kasirku/models/product.dart';
+import 'package:kasirku/models/restaurant_table.dart';
 import 'package:kasirku/models/stock_movement.dart';
+import 'package:kasirku/models/table_session.dart';
 import 'package:kasirku/models/user_profile.dart';
 import 'package:kasirku/features/pos/presentation/cart_provider.dart';
 
@@ -125,6 +127,36 @@ void main() {
   );
   assert(adminUser.isAdmin, 'Admin should have admin rights');
   assert(!cashierUser.isAdmin, 'Cashier should not have admin rights');
+
+  // 7. Table and Session tests
+  final table1 = RestaurantTable(
+    id: 'tbl-1',
+    tableNumber: '01',
+    name: 'Meja 01',
+    capacity: 4,
+    status: TableStatus.available,
+    qrToken: 'tok_01_xyz',
+    createdAt: now,
+    updatedAt: now,
+  );
+  assert(table1.isAvailable, 'Table should be available');
+  assert(!table1.isOccupied, 'Table should not be occupied');
+
+  final session = TableSession(
+    id: 'sess-1',
+    tableId: 'tbl-1',
+    tableNumber: '01',
+    status: SessionStatus.open,
+    totalAmount: 100000,
+    paidAmount: 100000,
+    startedAt: now,
+  );
+  assert(session.outstandingAmount == 0.0, 'Outstanding amount should be 0');
+  assert(session.canClose, 'Session with 0 outstanding can close');
+
+  final unpaidSession = session.copyWith(paidAmount: 50000);
+  assert(unpaidSession.outstandingAmount == 50000, 'Outstanding should be 50000');
+  assert(!unpaidSession.canClose, 'Unpaid session cannot close');
 
   // Self check complete without throwing AssertionError
 }

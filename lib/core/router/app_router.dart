@@ -9,6 +9,7 @@ import '../../features/pos/presentation/pos_screen.dart';
 import '../../features/products/presentation/product_list_screen.dart';
 import '../../features/reports/presentation/reports_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
+import '../../features/tables/presentation/tables_screen.dart';
 import '../../features/transactions/presentation/transaction_history_screen.dart';
 import '../widgets/app_shell.dart';
 
@@ -63,6 +64,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/pos',
             builder: (context, state) => const PosScreen(),
+          ),
+          GoRoute(
+            path: '/tables',
+            builder: (context, state) => const TablesScreen(),
           ),
           GoRoute(
             path: '/products',

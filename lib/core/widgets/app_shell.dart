@@ -149,6 +149,13 @@ class _DesktopLayout extends StatelessWidget {
                         isSelected: currentLocation.startsWith('/pos'),
                         onTap: () => context.go('/pos'),
                       ),
+                      _SidebarNavItem(
+                        icon: Icons.table_restaurant_outlined,
+                        activeIcon: Icons.table_restaurant_rounded,
+                        label: 'Meja & QR Resto',
+                        isSelected: currentLocation.startsWith('/tables'),
+                        onTap: () => context.go('/tables'),
+                      ),
                       if (isAdmin) ...[
                         _SidebarNavItem(
                           icon: Icons.inventory_2_outlined,
@@ -362,6 +369,13 @@ class _TabletLayout extends StatelessWidget {
                         isSelected: currentLocation.startsWith('/pos'),
                         onTap: () => context.go('/pos'),
                       ),
+                      _CompactNavItem(
+                        icon: Icons.table_restaurant_outlined,
+                        activeIcon: Icons.table_restaurant_rounded,
+                        tooltip: 'Meja & QR Resto',
+                        isSelected: currentLocation.startsWith('/tables'),
+                        onTap: () => context.go('/tables'),
+                      ),
                       if (isAdmin) ...[
                         _CompactNavItem(
                           icon: Icons.inventory_2_outlined,
@@ -440,8 +454,10 @@ class _MobileLayout extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (!isAdmin) {
-      // Cashier simplified bottom bar: Kasir (0), Transaksi (1), Logout (2)
-      final cashierIndex = currentLocation.startsWith('/transactions') ? 1 : 0;
+      int cashierIndex = 0;
+      if (currentLocation.startsWith('/tables')) cashierIndex = 1;
+      if (currentLocation.startsWith('/transactions')) cashierIndex = 2;
+
       return Scaffold(
         body: child,
         bottomNavigationBar: Container(
@@ -454,8 +470,9 @@ class _MobileLayout extends StatelessWidget {
               selectedIndex: cashierIndex,
               onDestinationSelected: (idx) {
                 if (idx == 0) context.go('/pos');
-                if (idx == 1) context.go('/transactions');
-                if (idx == 2) onLogout();
+                if (idx == 1) context.go('/tables');
+                if (idx == 2) context.go('/transactions');
+                if (idx == 3) onLogout();
               },
               backgroundColor: AppColors.surface,
               indicatorColor: AppColors.primaryLight,
@@ -466,6 +483,11 @@ class _MobileLayout extends StatelessWidget {
                   icon: Icon(Icons.point_of_sale_outlined),
                   selectedIcon: Icon(Icons.point_of_sale, color: AppColors.primary),
                   label: 'Kasir',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.table_restaurant_outlined),
+                  selectedIcon: Icon(Icons.table_restaurant_rounded, color: AppColors.primary),
+                  label: 'Meja',
                 ),
                 NavigationDestination(
                   icon: Icon(Icons.receipt_long_outlined),
@@ -575,6 +597,15 @@ class _MobileLayout extends StatelessWidget {
                     color: AppColors.border,
                     borderRadius: BorderRadius.circular(2),
                   ),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.table_restaurant_outlined, color: AppColors.primary),
+                  title: const Text('Meja & QR Resto', style: TextStyle(fontWeight: FontWeight.w600)),
+                  subtitle: const Text('Denah meja dan QR code ordering pelanggan'),
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    context.go('/tables');
+                  },
                 ),
                 ListTile(
                   leading: const Icon(Icons.warehouse_outlined, color: AppColors.primary),

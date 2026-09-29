@@ -19,6 +19,7 @@ dependencies:
   flutter_riverpod: 2.6.1
   go_router: ^14.8.1
   intl: ^0.20.3
+  qr_flutter: 4.1.0
   uuid: ^4.6.0
 
 dev_dependencies:
