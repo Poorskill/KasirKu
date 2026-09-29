@@ -158,21 +158,28 @@ class HybridProductRepository implements ProductRepository {
   }
 
   @override
-  Stream<List<Product>> watchProducts() {
+  Stream<List<Product>> watchProducts() async* {
     if (_firebaseReady) {
       try {
-        return FirebaseFirestore.instance
+        yield* FirebaseFirestore.instance
             .collection('products')
             .orderBy('name')
             .snapshots()
-            .map((snap) => snap.docs
-                .map((doc) => Product.fromJson(doc.data(), id: doc.id))
-                .toList());
+            .map((snap) {
+          if (snap.docs.isEmpty) {
+            return List.unmodifiable(_inMemoryProducts);
+          }
+          return snap.docs
+              .map((doc) => Product.fromJson(doc.data(), id: doc.id))
+              .toList();
+        });
+        return;
       } catch (_) {
-        // fallback
+        // fallback to local
       }
     }
-    return _inMemoryController.stream;
+    yield List.unmodifiable(_inMemoryProducts);
+    yield* _inMemoryController.stream;
   }
 
   @override

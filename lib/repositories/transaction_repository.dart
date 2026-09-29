@@ -189,19 +189,26 @@ class HybridTransactionRepository implements TransactionRepository {
   }
 
   @override
-  Stream<List<TransactionRecord>> watchTransactions() {
+  Stream<List<TransactionRecord>> watchTransactions() async* {
     if (_firebaseReady) {
       try {
-        return FirebaseFirestore.instance
+        yield* FirebaseFirestore.instance
             .collection('transactions')
             .orderBy('createdAt', descending: true)
             .snapshots()
-            .map((snap) => snap.docs
-                .map((d) => TransactionRecord.fromJson(d.data(), id: d.id))
-                .toList());
+            .map((snap) {
+          if (snap.docs.isEmpty) {
+            return List.unmodifiable(_inMemoryTransactions);
+          }
+          return snap.docs
+              .map((d) => TransactionRecord.fromJson(d.data(), id: d.id))
+              .toList();
+        });
+        return;
       } catch (_) {}
     }
-    return _inMemoryController.stream;
+    yield List.unmodifiable(_inMemoryTransactions);
+    yield* _inMemoryController.stream;
   }
 
   @override

@@ -189,7 +189,7 @@ class _ProductCatalog extends ConsumerWidget {
     final productsAsync = ref.watch(productsStreamProvider);
     final filtered = ref.watch(activeProductsForPosProvider);
     final categoriesAsync = ref.watch(categoriesProvider);
-    final selectedCategory = ref.watch(selectedCategoryFilterProvider);
+    final selectedCategory = ref.watch(posCategoryFilterProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -216,7 +216,7 @@ class _ProductCatalog extends ConsumerWidget {
           hint: 'Cari produk di kasir...',
           prefixIcon: const Icon(Icons.search, size: 20, color: AppColors.textSecondary),
           onChanged: (val) {
-            ref.read(productSearchQueryProvider.notifier).state = val;
+            ref.read(posSearchQueryProvider.notifier).state = val;
           },
         ),
         const SizedBox(height: AppDimensions.spaceSm),
@@ -235,7 +235,7 @@ class _ProductCatalog extends ConsumerWidget {
                     selected: isSelected,
                     onSelected: (_) {
                       ref
-                          .read(selectedCategoryFilterProvider.notifier)
+                          .read(posCategoryFilterProvider.notifier)
                           .state = cat.id;
                     },
                     backgroundColor: AppColors.surface,

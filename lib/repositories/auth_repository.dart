@@ -60,7 +60,10 @@ class HybridAuthRepository implements AuthRepository {
   }
 
   @override
-  Stream<UserProfile?> watchAuthState() => _controller.stream;
+  Stream<UserProfile?> watchAuthState() async* {
+    yield _currentUser;
+    yield* _controller.stream;
+  }
 
   @override
   Future<UserProfile?> getCurrentUser() async => _currentUser;

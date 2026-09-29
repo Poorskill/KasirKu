@@ -88,19 +88,26 @@ class HybridStockRepository implements StockRepository {
   }
 
   @override
-  Stream<List<StockMovement>> watchMovements() {
+  Stream<List<StockMovement>> watchMovements() async* {
     if (_firebaseReady) {
       try {
-        return FirebaseFirestore.instance
+        yield* FirebaseFirestore.instance
             .collection('stock_movements')
             .orderBy('createdAt', descending: true)
             .snapshots()
-            .map((snap) => snap.docs
-                .map((d) => StockMovement.fromJson(d.data(), id: d.id))
-                .toList());
+            .map((snap) {
+          if (snap.docs.isEmpty) {
+            return List.unmodifiable(_movements);
+          }
+          return snap.docs
+              .map((d) => StockMovement.fromJson(d.data(), id: d.id))
+              .toList();
+        });
+        return;
       } catch (_) {}
     }
-    return _inMemoryController.stream;
+    yield List.unmodifiable(_movements);
+    yield* _inMemoryController.stream;
   }
 
   @override

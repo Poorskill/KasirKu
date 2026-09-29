@@ -75,10 +75,13 @@ final filteredProductsProvider = Provider<List<Product>>((ref) {
   );
 });
 
+final posSearchQueryProvider = StateProvider<String>((ref) => '');
+final posCategoryFilterProvider = StateProvider<String>((ref) => 'all');
+
 final activeProductsForPosProvider = Provider<List<Product>>((ref) {
   final productsAsync = ref.watch(productsStreamProvider);
-  final search = ref.watch(productSearchQueryProvider).trim().toLowerCase();
-  final category = ref.watch(selectedCategoryFilterProvider);
+  final search = ref.watch(posSearchQueryProvider).trim().toLowerCase();
+  final category = ref.watch(posCategoryFilterProvider);
 
   return productsAsync.maybeWhen(
     data: (products) {
