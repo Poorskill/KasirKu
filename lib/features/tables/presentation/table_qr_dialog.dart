@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,6 +6,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimensions.dart';
 import '../../../core/widgets/app_button.dart';
+import '../../../core/widgets/app_text_field.dart';
 import '../../../models/restaurant_table.dart';
 import 'tables_provider.dart';
 
@@ -26,16 +28,35 @@ class TableQrDialog extends ConsumerStatefulWidget {
 
 class _TableQrDialogState extends ConsumerState<TableQrDialog> {
   late RestaurantTable _currentTable;
+  late TextEditingController _domainController;
   bool _isRegenerating = false;
+  bool _showCustomDomain = false;
 
   @override
   void initState() {
     super.initState();
     _currentTable = widget.table;
+
+    String initialOrigin = 'https://kasirku.vercel.app';
+    if (kIsWeb) {
+      final origin = Uri.base.origin;
+      if (origin.isNotEmpty && !origin.startsWith('file:') && !origin.contains('localhost:0')) {
+        initialOrigin = origin;
+      }
+    }
+    _domainController = TextEditingController(text: initialOrigin);
   }
 
-  String get _orderUrl =>
-      'https://kasirku.vercel.app/order/${_currentTable.storeId}/${_currentTable.qrToken}';
+  @override
+  void dispose() {
+    _domainController.dispose();
+    super.dispose();
+  }
+
+  String get _orderUrl {
+    final base = _domainController.text.trim().replaceAll(RegExp(r'/+$'), '');
+    return '$base/order/${_currentTable.storeId}/${_currentTable.qrToken}';
+  }
 
   Future<void> _regenerateToken() async {
     setState(() => _isRegenerating = true);
@@ -62,9 +83,10 @@ class _TableQrDialogState extends ConsumerState<TableQrDialog> {
   void _copyLink() {
     Clipboard.setData(ClipboardData(text: _orderUrl));
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Tautan Order Meja disalin ke clipboard!'),
+      SnackBar(
+        content: Text('Tautan Order Meja disalin:\n$_orderUrl'),
         backgroundColor: AppColors.primary,
+        duration: const Duration(seconds: 4),
       ),
     );
   }
@@ -103,8 +125,52 @@ class _TableQrDialogState extends ConsumerState<TableQrDialog> {
                   ),
                 ],
               ),
-              const Divider(height: 1),
-              const SizedBox(height: 16),
+              // Domain Host Setting
+              InkWell(
+                onTap: () => setState(() => _showCustomDomain = !_showCustomDomain),
+                borderRadius: BorderRadius.circular(6),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.language_rounded, size: 14, color: AppColors.textSecondary),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          'Host: ${_domainController.text}',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: AppColors.textSecondary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Icon(
+                        _showCustomDomain ? Icons.expand_less : Icons.edit_outlined,
+                        size: 14,
+                        color: AppColors.primary,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              if (_showCustomDomain) ...[
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    Expanded(
+                      child: AppTextField(
+                        label: 'Alamat Domain Web/Vercel',
+                        hint: 'https://nama-proyek.vercel.app',
+                        controller: _domainController,
+                        onChanged: (_) => setState(() {}),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+              const SizedBox(height: 10),
 
               // Printable Table Tent Stand Design Box
               Container(

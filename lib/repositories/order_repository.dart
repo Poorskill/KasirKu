@@ -5,9 +5,12 @@ import '../models/online_payment.dart';
 import '../models/restaurant_order.dart';
 import '../models/restaurant_table.dart';
 import '../models/stock_movement.dart';
+import '../models/transaction.dart';
+import '../models/transaction_item.dart';
 import 'product_repository.dart';
 import 'stock_repository.dart';
 import 'table_repository.dart';
+import 'transaction_repository.dart';
 
 abstract class OrderRepository {
   Stream<List<RestaurantOrder>> watchOrders();
@@ -16,6 +19,7 @@ abstract class OrderRepository {
   Future<void> createOrder(RestaurantOrder order);
   Future<void> updateOrderStatus(String orderId, OrderStatus status);
   Future<void> markOrderPaid(String orderId);
+  Future<void> cancelOrder(String orderId, {String reason = 'Dibatalkan'});
   Future<bool> verifyAndSettlePayment(String paymentId);
 
   Stream<List<OnlinePayment>> watchPayments();
@@ -27,6 +31,7 @@ class HybridOrderRepository implements OrderRepository {
   final ProductRepository _productRepo;
   final StockRepository _stockRepo;
   final TableRepository _tableRepo;
+  final TransactionRepository? _transactionRepo;
 
   final _ordersController = StreamController<List<RestaurantOrder>>.broadcast();
   final _paymentsController = StreamController<List<OnlinePayment>>.broadcast();
@@ -35,7 +40,12 @@ class HybridOrderRepository implements OrderRepository {
   List<OnlinePayment> _payments = [];
   bool _firebaseReady = false;
 
-  HybridOrderRepository(this._productRepo, this._stockRepo, this._tableRepo) {
+  HybridOrderRepository(
+    this._productRepo,
+    this._stockRepo,
+    this._tableRepo, [
+    this._transactionRepo,
+  ]) {
     _init();
   }
 
@@ -291,6 +301,60 @@ class HybridOrderRepository implements OrderRepository {
   }
 
   @override
+  Future<void> cancelOrder(String orderId, {String reason = 'Dibatalkan'}) async {
+    final now = DateTime.now();
+    final orderIndex = _orders.indexWhere((o) => o.id == orderId);
+    if (orderIndex == -1) return;
+
+    final curOrder = _orders[orderIndex];
+    if (curOrder.orderStatus == OrderStatus.cancelled ||
+        curOrder.orderStatus == OrderStatus.refunded) {
+      return;
+    }
+
+    final wasPaid = curOrder.isPaid;
+
+    if (_firebaseReady) {
+      try {
+        await FirebaseFirestore.instance.collection('orders').doc(orderId).update({
+          'orderStatus': OrderStatus.cancelled.name,
+          'updatedAt': now.toIso8601String(),
+        });
+      } catch (_) {}
+    }
+
+    _orders[orderIndex] = curOrder.copyWith(
+      orderStatus: OrderStatus.cancelled,
+      updatedAt: now,
+    );
+    _ordersController.add(List.unmodifiable(_orders));
+
+    // Rollback stock if order was already settled/paid
+    if (wasPaid) {
+      for (final item in curOrder.items) {
+        await _productRepo.adjustStock(item.productId, -item.quantity);
+        final prods = await _productRepo.getProducts();
+        final matches = prods.where((p) => p.id == item.productId);
+        final currentStock = matches.isNotEmpty ? matches.first.stock : 0;
+        await _stockRepo.recordMovement(
+          StockMovement(
+            id: 'SM-RESTORE-${now.millisecondsSinceEpoch}-${item.productId}',
+            productId: item.productId,
+            productName: item.productName,
+            type: StockMovementType.adjustment,
+            quantity: item.quantity,
+            previousStock: (currentStock - item.quantity).clamp(0, 999999),
+            newStock: currentStock,
+            reason: 'Pengembalian stok dari batal #${curOrder.orderNumber}: $reason',
+            createdAt: now,
+            createdBy: 'System / Kasir',
+          ),
+        );
+      }
+    }
+  }
+
+  @override
   Future<bool> verifyAndSettlePayment(String paymentId) async {
     final paymentIndex = _payments.indexWhere((p) => p.id == paymentId);
     if (paymentIndex == -1) return false;
@@ -309,22 +373,49 @@ class HybridOrderRepository implements OrderRepository {
     _payments[paymentIndex] = updatedPayment;
     _paymentsController.add(List.unmodifiable(_payments));
 
+    if (_firebaseReady) {
+      try {
+        await FirebaseFirestore.instance
+            .collection('payments')
+            .doc(paymentId)
+            .update({
+          'status': OnlinePaymentStatus.paid.name,
+          'paidAt': now.toIso8601String(),
+        });
+      } catch (_) {}
+    }
+
     // Update order
     final orderIndex = _orders.indexWhere((o) => o.id == curPayment.orderId);
     if (orderIndex != -1) {
       final curOrder = _orders[orderIndex];
-      _orders[orderIndex] = curOrder.copyWith(
+      final updatedOrder = curOrder.copyWith(
         paymentStatus: 'paid',
         orderStatus: OrderStatus.paid,
         updatedAt: now,
       );
+      _orders[orderIndex] = updatedOrder;
       _ordersController.add(List.unmodifiable(_orders));
 
-      // Stock deduction with idempotency
+      if (_firebaseReady) {
+        try {
+          await FirebaseFirestore.instance
+              .collection('orders')
+              .doc(curOrder.id)
+              .update({
+            'paymentStatus': 'paid',
+            'orderStatus': OrderStatus.paid.name,
+            'updatedAt': now.toIso8601String(),
+          });
+        } catch (_) {}
+      }
+
+      // Stock deduction with idempotency and safe product lookup
       for (final item in curOrder.items) {
         await _productRepo.adjustStock(item.productId, item.quantity);
-        final prod = await _productRepo.getProducts().then(
-            (l) => l.firstWhere((p) => p.id == item.productId));
+        final prods = await _productRepo.getProducts();
+        final matches = prods.where((p) => p.id == item.productId);
+        final curStock = matches.isNotEmpty ? matches.first.stock : 0;
         await _stockRepo.recordMovement(
           StockMovement(
             id: 'SM-${now.millisecondsSinceEpoch}-${item.productId}',
@@ -332,8 +423,8 @@ class HybridOrderRepository implements OrderRepository {
             productName: item.productName,
             type: StockMovementType.sale,
             quantity: -item.quantity,
-            previousStock: prod.stock + item.quantity,
-            newStock: prod.stock,
+            previousStock: curStock + item.quantity,
+            newStock: curStock,
             reason: 'Order QR Meja #${curOrder.orderNumber}',
             createdAt: now,
             createdBy: 'Online Customer',
@@ -341,9 +432,70 @@ class HybridOrderRepository implements OrderRepository {
         );
       }
 
-      // Ensure table status is occupied
+      // Ensure table session and status
       if (curOrder.tableId.isNotEmpty) {
+        final table = await _tableRepo.getTableById(curOrder.tableId);
+        if (table != null) {
+          String activeSessionId = table.currentSessionId ?? '';
+          if (activeSessionId.isEmpty) {
+            final session = await _tableRepo.openTableSession(
+              table.id,
+              createdBy: 'Customer QR',
+            );
+            activeSessionId = session.id;
+          }
+
+          // Update session amounts
+          final existingSession =
+              await _tableRepo.getSessionById(activeSessionId);
+          final prevTotal = existingSession?.totalAmount ?? 0.0;
+          final prevPaid = existingSession?.paidAmount ?? 0.0;
+          final prevOrders = existingSession?.orderIds ?? [];
+
+          await _tableRepo.updateSessionAmounts(
+            activeSessionId,
+            totalAmount: prevTotal + curOrder.total,
+            paidAmount: prevPaid + curOrder.total,
+            orderIds: [...prevOrders, curOrder.orderNumber],
+          );
+        }
         await _tableRepo.updateTableStatus(curOrder.tableId, TableStatus.occupied);
+      }
+
+      // Bridge to Transaction Record for Reports & History
+      if (_transactionRepo != null) {
+        final trxId = 'TRX-${curOrder.orderNumber}';
+        final existingTrx = await _transactionRepo.getTransactionById(trxId);
+        if (existingTrx == null) {
+          final trxRecord = TransactionRecord(
+            id: trxId,
+            cashierId: 'online-customer',
+            cashierName: curOrder.customerName,
+            items: curOrder.items
+                .map((i) => TransactionItem(
+                      productId: i.productId,
+                      productName: i.productName,
+                      price: i.unitPrice,
+                      costPrice: 0,
+                      quantity: i.quantity,
+                      subtotal: i.subtotal,
+                    ))
+                .toList(),
+            subtotal: curOrder.subtotal,
+            discount: curOrder.discount,
+            tax: curOrder.tax,
+            total: curOrder.total,
+            paymentMethod: PaymentMethod.qris,
+            paymentAmount: curOrder.total,
+            change: 0,
+            orderType: 'dineIn',
+            tableId: curOrder.tableId,
+            tableNumber: curOrder.tableNumber,
+            createdAt: now,
+            status: 'success',
+          );
+          await _transactionRepo.createTransaction(trxRecord);
+        }
       }
     }
 

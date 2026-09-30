@@ -186,27 +186,10 @@ class HybridTableRepository implements TableRepository {
   @override
   Future<RestaurantTable?> getTableByToken(String qrToken) async {
     final list = await getTables();
-    // 1. Exact match
-    final exact = list.where((t) => t.qrToken == qrToken);
-    if (exact.isNotEmpty) return exact.first;
-
-    // 2. Fallback prefix/substring match (e.g. if URL got truncated or suffix appended)
-    final trimmedToken = qrToken.trim();
-    for (final t in list) {
-      if (trimmedToken.startsWith(t.qrToken) || t.qrToken.startsWith(trimmedToken)) {
-        return t;
-      }
-    }
-
-    // 3. Fallback matching table number from token pattern tbl_tok_<number>_
-    final parts = trimmedToken.split('_');
-    if (parts.length >= 3) {
-      final numberCandidate = parts[2];
-      final byNumber = list.where((t) => t.tableNumber == numberCandidate);
-      if (byNumber.isNotEmpty) return byNumber.first;
-    }
-
-    return null;
+    final trimmed = qrToken.trim();
+    if (trimmed.isEmpty) return null;
+    final exact = list.where((t) => t.qrToken == trimmed);
+    return exact.isNotEmpty ? exact.first : null;
   }
 
   @override

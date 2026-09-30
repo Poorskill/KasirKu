@@ -28,16 +28,8 @@ class HybridAuthRepository implements AuthRepository {
       _firebaseReady = false;
     }
 
-    // Default authenticated demo admin user so reviewer can test right away or login
-    _currentUser = UserProfile(
-      id: 'usr-admin-01',
-      name: 'Admin KasirKu',
-      email: 'admin@kasirku.id',
-      role: 'admin',
-      storeName: 'Toko Berkah UMKM',
-      createdAt: DateTime.now().subtract(const Duration(days: 60)),
-    );
-    _controller.add(_currentUser);
+    _currentUser = null;
+    _controller.add(null);
 
     if (_firebaseReady) {
       FirebaseAuth.instance.authStateChanges().listen((fbUser) {

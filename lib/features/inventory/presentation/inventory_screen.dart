@@ -48,7 +48,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: SingleChildScrollView(
+        child: Padding(
           padding: EdgeInsets.all(
             context.isMobile ? AppDimensions.spaceSm : AppDimensions.spaceMd,
           ),
@@ -101,8 +101,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
               const SizedBox(height: AppDimensions.spaceMd),
 
               // Tab Views
-              SizedBox(
-                height: 640,
+              Expanded(
                 child: TabBarView(
                   controller: _tabController,
                   children: [

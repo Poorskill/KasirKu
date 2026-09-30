@@ -5,10 +5,12 @@ import '../../../core/constants/app_dimensions.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_text_field.dart';
+import '../../../models/restaurant_order.dart';
 import '../../../models/stock_movement.dart';
 import '../../../models/transaction.dart';
 import '../../auth/presentation/auth_provider.dart';
 import '../../inventory/presentation/stock_provider.dart';
+import '../../orders/presentation/orders_provider.dart';
 import '../../products/presentation/products_provider.dart';
 import '../../tables/presentation/tables_provider.dart';
 import '../../transactions/presentation/transactions_provider.dart';
@@ -103,14 +105,67 @@ class _CheckoutDialogState extends ConsumerState<CheckoutDialog> {
     final trxRepo = ref.read(transactionRepositoryProvider);
     await trxRepo.createTransaction(transaction);
 
-    // If Dine-in with table, mark table occupied if currently available
+    // If Dine-in with table, handle TableSession and occupied status
+    String? activeSessionId = cart.selectedTable?.currentSessionId;
     if (cart.isDineIn && cart.selectedTable != null) {
-      if (cart.selectedTable!.isAvailable) {
-        await ref
-            .read(tableControllerProvider.notifier)
-            .updateStatus(cart.selectedTable!.id, TableStatus.occupied);
+      final table = cart.selectedTable!;
+      if (activeSessionId == null || activeSessionId.isEmpty) {
+        final session = await ref.read(tableRepositoryProvider).openTableSession(
+              table.id,
+              createdBy: user?.name ?? 'Kasir',
+            );
+        activeSessionId = session.id;
       }
+
+      final existingSession =
+          await ref.read(tableRepositoryProvider).getSessionById(activeSessionId);
+      final prevTotal = existingSession?.totalAmount ?? 0.0;
+      final prevPaid = existingSession?.paidAmount ?? 0.0;
+      final prevOrders = existingSession?.orderIds ?? [];
+
+      await ref.read(tableRepositoryProvider).updateSessionAmounts(
+            activeSessionId,
+            totalAmount: prevTotal + cart.total,
+            paidAmount: prevPaid + cart.total,
+            orderIds: [...prevOrders, trxId],
+          );
+
+      await ref
+          .read(tableControllerProvider.notifier)
+          .updateStatus(table.id, TableStatus.occupied);
     }
+
+    // Bridge POS transaction to Kitchen KDS and Waiter by creating RestaurantOrder
+    final restaurantOrder = RestaurantOrder(
+      id: 'ord-${now.millisecondsSinceEpoch}',
+      tableId: cart.selectedTable?.id ?? '',
+      tableSessionId: activeSessionId,
+      tableNumber: cart.selectedTable?.tableNumber ?? (cart.isTakeaway ? 'Takeaway' : 'POS'),
+      orderNumber: trxId,
+      customerName: cart.isDineIn && cart.selectedTable != null
+          ? 'Meja ${cart.selectedTable!.tableNumber} (Kasir)'
+          : 'Takeaway (Kasir)',
+      items: cart.items
+          .map((i) => RestaurantOrderItem(
+                productId: i.product.id,
+                productName: i.product.name,
+                unitPrice: i.product.price,
+                quantity: i.quantity,
+                subtotal: i.subtotal,
+              ))
+          .toList(),
+      subtotal: cart.subtotal,
+      discount: cart.discount,
+      tax: cart.taxAmount,
+      total: cart.total,
+      paymentStatus: 'paid',
+      orderStatus: OrderStatus.paid,
+      source: OrderSource.pos,
+      cashierId: user?.id,
+      createdAt: now,
+      updatedAt: now,
+    );
+    await ref.read(orderRepositoryProvider).createOrder(restaurantOrder);
 
     // Reduce stock and record movement for each product
     final prodRepo = ref.read(productRepositoryProvider);

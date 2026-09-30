@@ -1,0 +1,108 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    
+    function hasRole(role) {
+      return isAuthenticated() && (
+        request.auth.token.role == role || 
+        getUserData().role == role
+      );
+    }
+    
+    function isAdmin() {
+      return hasRole('admin');
+    }
+    
+    function isStaff() {
+      return isAuthenticated() && (
+        isAdmin() || 
+        hasRole('cashier') || 
+        hasRole('waiter') || 
+        hasRole('kitchen')
+      );
+    }
+
+    // Users collection
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin() || (isAuthenticated() && request.auth.uid == userId);
+    }
+
+    // Products & Categories (Public read for customer menu)
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Tables (Public read for QR token resolution)
+    match /tables/{tableId} {
+      allow read: if true;
+      allow create, delete: if isAdmin();
+      allow update: if isStaff();
+    }
+
+    // Table Sessions
+    match /table_sessions/{sessionId} {
+      allow read: if true;
+      allow write: if isStaff();
+    }
+
+    // Orders (Customer can create pending orders, staff can manage)
+    match /orders/{orderId} {
+      allow read: if true;
+      allow create: if request.resource.data.paymentStatus == 'pending' || isStaff();
+      allow update, delete: if isStaff();
+    }
+
+    // Online Payments (Customer creates pending payment, only staff/backend settles)
+    match /payments/{paymentId} {
+      allow read: if true;
+      allow create: if request.resource.data.status == 'pending' || isStaff();
+      allow update: if isStaff();
+    }
+
+    // Transactions (Sales records)
+    match /transactions/{transactionId} {
+      allow read, write: if isStaff();
+    }
+
+    // Stock Movements (Inventory audit log)
+    match /stock_movements/{movementId} {
+      allow read, write: if isStaff();
+    }
+
+    // Waiter Calls (Customer can request assistance, staff resolves)
+    match /waiter_calls/{callId} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if isStaff();
+    }
+
+    // Store Settings
+    match /settings/{storeId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Reservations
+    match /reservations/{reservationId} {
+      allow read: if isStaff();
+      allow create: if true;
+      allow update, delete: if isStaff();
+    }
+  }
+}

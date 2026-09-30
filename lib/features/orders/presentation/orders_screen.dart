@@ -63,7 +63,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen>
                     o.orderStatus == OrderStatus.completed)
                 .toList();
 
-            return SingleChildScrollView(
+            return Padding(
               padding: EdgeInsets.all(
                 context.isMobile
                     ? AppDimensions.spaceSm
@@ -154,8 +154,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen>
                   const SizedBox(height: AppDimensions.spaceMd),
 
                   // Tab Views
-                  SizedBox(
-                    height: 650,
+                  Expanded(
                     child: TabBarView(
                       controller: _tabController,
                       children: [
@@ -411,22 +410,46 @@ class _OrderCard extends ConsumerWidget {
   Widget _buildActionButton(BuildContext context, WidgetRef ref) {
     switch (order.orderStatus) {
       case OrderStatus.paid:
-        return AppButton(
-          text: 'Terima Pesanan',
-          icon: Icons.check,
-          height: 36,
-          onPressed: () {
-            ref
-                .read(orderControllerProvider.notifier)
-                .updateStatus(order.id, OrderStatus.confirmed);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                    'Pesanan ${order.orderNumber} diterima dan diteruskan ke Dapur'),
-                backgroundColor: AppColors.primary,
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AppButton(
+              text: 'Terima',
+              icon: Icons.check,
+              height: 36,
+              onPressed: () {
+                ref
+                    .read(orderControllerProvider.notifier)
+                    .updateStatus(order.id, OrderStatus.confirmed);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                        'Pesanan ${order.orderNumber} diterima dan diteruskan ke Dapur'),
+                    backgroundColor: AppColors.primary,
+                  ),
+                );
+              },
+            ),
+            const SizedBox(width: 6),
+            SizedBox(
+              height: 36,
+              child: IconButton(
+                icon: const Icon(Icons.cancel_outlined, size: 18, color: AppColors.danger),
+                tooltip: 'Batalkan Pesanan',
+                onPressed: () {
+                  ref
+                      .read(orderControllerProvider.notifier)
+                      .cancelOrder(order.id, reason: 'Ditolak kasir');
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Pesanan ${order.orderNumber} dibatalkan'),
+                      backgroundColor: AppColors.danger,
+                    ),
+                  );
+                },
               ),
-            );
-          },
+            ),
+          ],
         );
       case OrderStatus.confirmed:
         return AppButton(

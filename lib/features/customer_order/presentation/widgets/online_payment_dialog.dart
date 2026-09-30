@@ -9,6 +9,7 @@ import '../../../../models/online_payment.dart';
 import '../../../../models/restaurant_order.dart';
 import '../../../../models/restaurant_table.dart';
 import '../../../orders/presentation/orders_provider.dart';
+import '../../../settings/presentation/settings_provider.dart';
 import '../customer_order_provider.dart';
 
 class OnlinePaymentDialog extends ConsumerStatefulWidget {
@@ -55,6 +56,11 @@ class _OnlinePaymentDialogState extends ConsumerState<OnlinePaymentDialog> {
 
   Future<void> _createPendingOrder() async {
     final cart = ref.read(customerCartNotifierProvider);
+    final settings = ref.read(currentStoreSettingsProvider);
+    final taxRate = settings.taxRate;
+    final taxAmount = (cart.subtotal * (taxRate / 100)).roundToDouble();
+    final grandTotal = cart.subtotal + taxAmount;
+
     final now = DateTime.now();
     final randomSuffix = (now.millisecondsSinceEpoch % 1000).toString().padLeft(3, '0');
     final orderId = 'ord-${now.millisecondsSinceEpoch % 100000}';
@@ -75,8 +81,8 @@ class _OnlinePaymentDialogState extends ConsumerState<OnlinePaymentDialog> {
       items: orderItems,
       subtotal: cart.subtotal,
       discount: 0,
-      tax: 0,
-      total: cart.subtotal,
+      tax: taxAmount,
+      total: grandTotal,
       paymentStatus: 'pending',
       orderStatus: OrderStatus.pendingPayment,
       source: OrderSource.tableQr,

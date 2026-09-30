@@ -5,12 +5,14 @@ import '../../../repositories/order_repository.dart';
 import '../../inventory/presentation/stock_provider.dart';
 import '../../products/presentation/products_provider.dart';
 import '../../tables/presentation/tables_provider.dart';
+import '../../transactions/presentation/transactions_provider.dart';
 
 final orderRepositoryProvider = Provider<OrderRepository>((ref) {
   final prodRepo = ref.watch(productRepositoryProvider);
   final stockRepo = ref.watch(stockRepositoryProvider);
   final tableRepo = ref.watch(tableRepositoryProvider);
-  return HybridOrderRepository(prodRepo, stockRepo, tableRepo);
+  final trxRepo = ref.watch(transactionRepositoryProvider);
+  return HybridOrderRepository(prodRepo, stockRepo, tableRepo, trxRepo);
 });
 
 final ordersStreamProvider = StreamProvider<List<RestaurantOrder>>((ref) {
@@ -83,6 +85,18 @@ class OrderController extends StateNotifier<AsyncValue<void>> {
       final ok = await _repo.verifyAndSettlePayment(paymentId);
       state = const AsyncValue.data(null);
       return ok;
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+      return false;
+    }
+  }
+
+  Future<bool> cancelOrder(String orderId, {String reason = 'Dibatalkan'}) async {
+    state = const AsyncValue.loading();
+    try {
+      await _repo.cancelOrder(orderId, reason: reason);
+      state = const AsyncValue.data(null);
+      return true;
     } catch (e, st) {
       state = AsyncValue.error(e, st);
       return false;
